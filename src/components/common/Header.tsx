@@ -9,7 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const { username, userStatus } = useUserStore();
@@ -17,10 +17,9 @@ const Header = () => {
 
   useEffect(() => {
     const userInfo = localStorage.getItem("userInfo");
-    console.log(userInfo)
-    let authToken = localStorage.getItem("authToken");
+    const accessToken = localStorage.getItem("accessToken");
 
-    if (userInfo && authToken) {
+    if (userInfo && accessToken) {
       try {
         const parsedUserInfo = JSON.parse(userInfo);
         useUserStore.setState({
@@ -46,10 +45,6 @@ const Header = () => {
     window.location.href = "http://localhost:5000/auth/github";
   };
 
-  const handleBoard = () => {
-    navigate("/board");
-  };
-
   const handleMain = () => {
     navigate("/");
   };
@@ -62,35 +57,39 @@ const Header = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userInfo");
     useUserStore.setState({ username: "", userStatus: "SIGNED_OUT" });
-    navigate("/")
+    navigate("/");
+  };
+
+  const handleBoardChange = (boardId: string) => {
+    navigate(`/boards/${boardId}/posts`);
   };
 
   const [notifications, setNotifications] = useState<any>([
-    {
-        text: "This is a notification",
-        date: "02-01-25",
-        read: true,
-    },
-    {
-        text: "This is another notification",
-        date: "02-01-25",
-        read: false,
-    }
-])
+    { text: "This is a notification", date: "02-01-25", read: true },
+    { text: "This is another notification", date: "02-01-25", read: false },
+  ]);
 
   return (
     <div className="flex border-b w-screen fixed top-0 p-4 bg-white">
       <h1
-        className="text-lg font-bold grow text-left pt-1 hover:cursor-pointer"
+        className="text-lg font-bold text-left pt-1 hover:cursor-pointer"
         onClick={handleMain}
       >
         DevMate
       </h1>
-      <div className="place-self-end">
-        <Button variant="link" onClick={handleBoard}>
-          Board
+      <span className="text-black mt-2 ml-6">|</span>
+      <div className="grow">
+        <Button variant="link" onClick={() => handleBoardChange("study")}>
+          Study
         </Button>
-        <span className="text-black mr-6">|</span>
+        <Button variant="link" onClick={() => handleBoardChange("toy")}>
+          Toy
+        </Button>
+        <Button variant="link" onClick={() => handleBoardChange("code")}>
+          Code
+        </Button>
+      </div>
+      <div className="place-self-end">
         {userStatus === "SIGNED_IN" ? (
           <>
             <Button className="mr-2 bg-white text-black" variant="outline">
@@ -99,21 +98,41 @@ const Header = () => {
               </span>
             </Button>
             <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button className="relative mr-2" variant="outline" size="icon" style={{ transform: 'translateY(2px)' }}>
-                    <div className={`absolute -top-2 -right-1 h-3 w-3 rounded-full my-1 ${notifications.find((x: any) => x.read === true) ? 'bg-green-500' : 'bg-neutral-200'}`}></div>
-                    <BellIcon className="h-4 w-4"></BellIcon>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="relative mr-2"
+                  variant="outline"
+                  size="icon"
+                  style={{ transform: "translateY(2px)" }}
+                >
+                  <div
+                    className={`absolute -top-2 -right-1 h-3 w-3 rounded-full my-1 ${
+                      notifications.find((x: any) => x.read === true)
+                        ? "bg-green-500"
+                        : "bg-neutral-200"
+                    }`}
+                  ></div>
+                  <BellIcon className="h-4 w-4" />
                 </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                {notifications.map((item: any, key: number) => <DropdownMenuItem key={key} className="py-2 px-3 cusor-pointer hover:bg-neutral-50 transition flex items-start gap-2">
-                    <div className={`h-3 w-3 rounded-full my-1 ${!item.read ? 'bg-green-500' : 'bg-neutral-200'}`}></div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {notifications.map((item: any, key: number) => (
+                  <DropdownMenuItem
+                    key={key}
+                    className="py-2 px-3 cusor-pointer hover:bg-neutral-50 transition flex items-start gap-2"
+                  >
+                    <div
+                      className={`h-3 w-3 rounded-full my-1 ${
+                        !item.read ? "bg-green-500" : "bg-neutral-200"
+                      }`}
+                    ></div>
                     <div>
-                    <p>{item.text}</p>
-                    <p className="text-ts text-neutral-500">{item.date}</p>
+                      <p>{item.text}</p>
+                      <p className="text-ts text-neutral-500">{item.date}</p>
                     </div>
-                </DropdownMenuItem>)}
-            </DropdownMenuContent>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
             </DropdownMenu>
             <Button onClick={handleSignOut}>Log Out</Button>
           </>

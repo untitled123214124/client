@@ -91,11 +91,8 @@ function ViewPost() {
       });
   }, [postId]);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const handleDeletePost = async () => {
+    const accessToken = localStorage.getItem("accessToken");
     try {
       const authToken = localStorage.getItem("authToken");
     
@@ -112,7 +109,7 @@ function ViewPost() {
     
       if (response.ok) {
         alert("게시글이 성공적으로 삭제되었습니다.");
-        navigate("/board");
+        navigate("/boards/study/posts");
       } else {
         alert("게시글 삭제에 실패했습니다.");
       }
@@ -124,7 +121,7 @@ function ViewPost() {
 
   const handleCommentPost = async () => {
     const authToken = localStorage.getItem("authToken");
-    const commentContent = inputValue;  // 댓글 내용은 inputValue에 저장된 값으로 사용
+    const commentContent = inputValue;
   
     if (!authToken) {
       throw new Error("User is not authenticated.");

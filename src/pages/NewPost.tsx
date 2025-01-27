@@ -1,12 +1,22 @@
 import { useRef, useEffect, useState } from "react";
 import EditorJS from "@editorjs/editorjs";
 import { useNavigate } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel
+} from "@/components/ui/select";
 
 function NewPost() {
   const editorRef = useRef<EditorJS | null>(null);
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
+  const [boardId, setBoardId] = useState<string | null>(null); // boardId 상태 추가
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,16 +41,24 @@ function NewPost() {
     };
   }, []);
 
-  const handleSave = async () => {
+  const validateForm = () => {
     if (!title.trim()) {
       setError("Title cannot be empty.");
-      return;
+      return false;
     }
-
+    if (!boardId) {
+      setError("Board ID is required.");
+      return false;
+    }
     if (!editorRef.current) {
       setError("Editor is not ready.");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
 
     setIsSaving(true);
     setError("");
@@ -48,43 +66,45 @@ function NewPost() {
     try {
       const savedData = await editorRef.current.save();
 
-      let response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/boards/1/posts/`, {
+      let accessToken = localStorage.getItem("accessToken");
+
+      if (!accessToken) {
+        throw new Error("Access token is missing.");
+      }
+
+      const requestOptions = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
         },
         credentials: 'include',
         body: JSON.stringify({
           title,
           content: JSON.stringify(savedData.blocks),
         }),
-      });
+      };
+
+      let response = await fetch(`http://localhost:5000/boards/${boardId}/posts/`, requestOptions);
 
       if (response.status === 401) {
-        const refreshResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/auth/refresh-token`, {
-          method: "POST",
+        const refreshResponse = await fetch("http://localhost:5000/auth/refresh-token", {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: 'include',
         });
 
-        const refreshData = await refreshResponse.json();
-        
-        if (refreshData.message === "액세스 토큰이 재발급되었습니다") {
-          response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/boards/1/posts/`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              title,
-              content: JSON.stringify(savedData.blocks),
-            }),
-          });
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          accessToken = data.accessToken;
+          localStorage.setItem("accessToken", accessToken);
+
+          requestOptions.headers["Authorization"] = `Bearer ${accessToken}`;
+          response = await fetch(`http://localhost:5000/boards/${boardId}/posts/`, requestOptions);
         } else {
-          throw new Error("Token refresh failed.");
+          throw new Error("Failed to refresh access token.");
         }
       }
 
@@ -93,7 +113,7 @@ function NewPost() {
         throw new Error(errorText || "Failed to save the post.");
       }
 
-      navigate(`/board`);
+      navigate(`/boards/${boardId}/posts`);
     } catch (error) {
       setError(error.message || "An unexpected error occurred.");
     } finally {
@@ -111,7 +131,21 @@ function NewPost() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-
+        <div>
+          <Select onValueChange={(value) => setBoardId(value)}>
+            <SelectTrigger className="mb-4">
+              <SelectValue placeholder="Select a board category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Categories</SelectLabel>
+                <SelectItem value="study">Study</SelectItem>
+                <SelectItem value="toy">Toy</SelectItem>
+                <SelectItem value="code">Code</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <div id="editor" className="border border-gray-300 rounded p-4"></div>
 
         {error && <p className="text-red-500 mt-2">{error}</p>}

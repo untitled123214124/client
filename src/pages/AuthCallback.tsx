@@ -8,11 +8,6 @@ const AuthCallback = () => {
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     const code = query.get("code");
-    const getCookieValue = (cookieName) => {
-      const cookies = document.cookie.split("; ");
-      const cookie = cookies.find((row) => row.startsWith(cookieName + "="));
-      return cookie ? cookie.split("=")[1] : null;
-    };
 
     if (code) {
       const handleLoginSuccess = async (code: string) => {
@@ -20,22 +15,14 @@ const AuthCallback = () => {
           console.log("GitHub 인증 코드:", code);
 
           const response = await fetch(
-            `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/auth/github/callback?code=${code}`
+            `http://localhost:5000/auth/github/callback?code=${code}`
           );
 
           if (response.ok) {
             const data = await response.json();
             console.log("로그인 성공 데이터:", data);
-            const accessToken = getCookieValue("accessToken");
-            const refreshToken = getCookieValue("refreshToken");
-
-            if (accessToken) {
-              localStorage.setItem("accessToken", accessToken);
-            }
-
-            if (refreshToken) {
-              localStorage.setItem("refreshToken", refreshToken);
-            }         
+            
+            localStorage.setItem("accessToken", data.token.accessToken);
             localStorage.setItem("userInfo", JSON.stringify(data.user));
 
             useUserStore.setState({
@@ -45,9 +32,9 @@ const AuthCallback = () => {
               userStatus: "SIGNED_IN",
             });
 
-            console.log(accessToken, refreshToken, data.user)
+            console.log(data.token.accessToken, data.user);
+            navigate("/profile");
 
-            navigate("/board");
           } else {
             console.error("Login callback failed:", await response.text());
             alert("로그인 실패");
@@ -59,6 +46,7 @@ const AuthCallback = () => {
       };
 
       handleLoginSuccess(code);
+    
     } else {
       console.error("GitHub 인증 코드가 URL에 없습니다.");
       alert("GitHub 인증 코드가 없습니다.");
