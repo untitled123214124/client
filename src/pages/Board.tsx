@@ -27,7 +27,7 @@ interface Post {
 }
 
 function Board() {
-  const { boardId } = useParams(); // boardId를 URL 파라미터로 받습니다.
+  const { boardId } = useParams();
   const [posts, setPosts] = useState<Post[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [totalPosts, setTotalPosts] = useState<number>(0);
@@ -88,10 +88,10 @@ function Board() {
         }
       })
       .catch((error) => {
-        console.error("Error fetching posts:", error); // 실제 오류 메시지 출력
+        console.error("Error fetching posts:", error);
         setError(error.message);
       });
-  }, [boardId, currentPage]); // boardId나 currentPage가 바뀌면 데이터 새로 불러오기
+  }, [boardId, currentPage]);
 
   if (error) {
     return <div>Error: {error}</div>;

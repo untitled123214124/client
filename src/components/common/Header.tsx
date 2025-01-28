@@ -1,45 +1,22 @@
 import { Button } from "../ui/button";
 import useUserStore from "@/stores/userStore";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { BellIcon } from "lucide-react";
-import { useState } from "react";
+import { Bell } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import useAuth from "@/hooks/useAuth";
+import useSignOut from "@/hooks/useSignOut";
+import useNotifications from "@/hooks/useNotifications";
 
 const Header = () => {
+  useAuth();
+
   const { username, userStatus } = useUserStore();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const userInfo = localStorage.getItem("userInfo");
-    const accessToken = localStorage.getItem("accessToken");
-
-    if (userInfo && accessToken) {
-      try {
-        const parsedUserInfo = JSON.parse(userInfo);
-        useUserStore.setState({
-          username: parsedUserInfo.username,
-          userStatus: "SIGNED_IN",
-        });
-      } catch (error) {
-        console.error("Failed to parse userInfo:", error);
-        useUserStore.setState({
-          userStatus: "SIGNED_OUT",
-          username: "",
-        });
-      }
-    } else {
-      useUserStore.setState({
-        userStatus: "SIGNED_OUT",
-        username: "",
-      });
-    }
-  }, []);
 
   const handleGitHubLogin = () => {
     window.location.href = "http://localhost:5000/auth/github";
@@ -53,21 +30,12 @@ const Header = () => {
     navigate("/profile");
   };
 
-  const handleSignOut = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userInfo");
-    useUserStore.setState({ username: "", userStatus: "SIGNED_OUT" });
-    navigate("/");
-  };
-
   const handleBoardChange = (boardId: string) => {
     navigate(`/boards/${boardId}/posts`);
   };
 
-  const [notifications, setNotifications] = useState<any>([
-    { text: "This is a notification", date: "02-01-25", read: true },
-    { text: "This is another notification", date: "02-01-25", read: false },
-  ]);
+  const handleSignOut = useSignOut();
+  const { notifications } = useNotifications();
 
   return (
     <div className="flex border-b w-screen fixed top-0 p-4 bg-white">
@@ -112,7 +80,7 @@ const Header = () => {
                         : "bg-neutral-200"
                     }`}
                   ></div>
-                  <BellIcon className="h-4 w-4" />
+                  <Bell className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

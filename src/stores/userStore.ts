@@ -6,14 +6,15 @@ interface UserStore {
   username: string;
   id: string;
   avatar_url: string;
+  bio: string;
   userStatus: UserStatus;
-  setUser: (username: string, id: string, avatar_url: string, userStatus: UserStatus) => void;
+  setUser: (username: string, id: string, avatar_url: string, bio: string, userStatus: UserStatus) => void;
   resetUser: () => void;
 }
 
 const useUserStore = create<UserStore>((set) => {
   const storedUserInfo = localStorage.getItem('userInfo');
-  const storedAuthToken = localStorage.getItem('authToken');
+  const storedAccessToken = localStorage.getItem('accessToken');
 
   if (storedUserInfo) {
     const parsedUserInfo = JSON.parse(storedUserInfo);
@@ -21,11 +22,11 @@ const useUserStore = create<UserStore>((set) => {
       username: parsedUserInfo.username,
       id: parsedUserInfo.id,
       avatar_url: parsedUserInfo.avatar_url,
-      userStatus: storedAuthToken ? 'SIGNED_IN' : 'SIGNED_OUT',
-      setUser: (username, id, avatar_url, userStatus) =>
-        set(() => ({ username, id, avatar_url, userStatus })),
+      userStatus: storedAccessToken ? 'SIGNED_IN' : 'SIGNED_OUT',
+      setUser: (username, id, avatar_url, bio, userStatus) =>
+        set(() => ({ username, id, avatar_url, bio, userStatus })),
       resetUser: () =>
-        set(() => ({ username: '', id: '', avatar_url: '', userStatus: 'SIGNED_OUT' })),
+        set(() => ({ username: '', id: '', avatar_url: '', bio: '', userStatus: 'SIGNED_OUT' })),
     };
   }
 
@@ -33,9 +34,10 @@ const useUserStore = create<UserStore>((set) => {
     username: '',
     id: '',
     avatar_url: '',
+    bio: '',
     userStatus: 'SIGNED_OUT',
-    setUser: (username, id, avatar_url, userStatus) => set(() => ({ username, id, avatar_url, userStatus })),
-    resetUser: () => set(() => ({ username: '', id: '', userStatus: 'SIGNED_OUT' })),
+    setUser: (username, id, avatar_url, bio, userStatus) => set(() => ({ username, id, avatar_url, bio, userStatus })),
+    resetUser: () => set(() => ({ username: '', id: '', avatar_url: '', bio: '', serStatus: 'SIGNED_OUT' })),
   };
 });
 

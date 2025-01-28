@@ -14,9 +14,8 @@ import {
 function NewPost() {
   const editorRef = useRef<EditorJS | null>(null);
   const navigate = useNavigate();
-
   const [title, setTitle] = useState("");
-  const [boardId, setBoardId] = useState<string | null>(null); // boardId 상태 추가
+  const [boardId, setBoardId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 

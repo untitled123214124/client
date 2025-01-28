@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
+import { Heart } from 'lucide-react';
 
 interface Post {
   _id: string;
@@ -25,7 +26,7 @@ interface Comment {
   userId: string;
   content: string;
   createdAt: string;
-  parentId?: string | null;  // 부모 댓글 ID 추가
+  parentId?: string | null;
 }
 
 interface CommentResponse {
@@ -35,6 +36,7 @@ interface CommentResponse {
 
 function ViewPost() {
   const { postId } = useParams<{ postId: string }>();
+  const { commentId } = useParams<{ postId: string }>();
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -47,6 +49,7 @@ function ViewPost() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState<string>('');
   const [editedContent, setEditedContent] = useState<string>('');
+  const [boardId, setBoardId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!postId) {
@@ -92,21 +95,25 @@ function ViewPost() {
   }, [postId]);
 
   const handleDeletePost = async () => {
-    const accessToken = localStorage.getItem("accessToken");
     try {
-      const authToken = localStorage.getItem("authToken");
-    
-      if (!authToken) {
+      const accessToken = localStorage.getItem("accessToken");
+
+      if (!accessToken) {
         throw new Error("User is not authenticated.");
       }
-    
+
       const response = await fetch(
-        `http://localhost:5000/boards/1/posts/${postId}`,
+        `http://localhost:5000/boards/${boardId}/posts/${postId}`,
         {
-          method: "DELETE"
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include",
         }
       );
-    
+
       if (response.ok) {
         alert("게시글이 성공적으로 삭제되었습니다.");
         navigate("/boards/study/posts");
@@ -119,25 +126,60 @@ function ViewPost() {
     }
   };
 
-  const handleCommentPost = async () => {
-    const authToken = localStorage.getItem("authToken");
-    const commentContent = inputValue;
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
   
-    if (!authToken) {
+      if (!accessToken) {
+        throw new Error("User is not authenticated.");
+      }
+  
+      const response = await fetch(
+        `http://localhost:5000/comments/${commentId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include",
+        }
+      );
+  
+      if (response.ok) {
+        alert("댓글이 성공적으로 삭제되었습니다.");
+        setComments((prevComments) =>
+          prevComments.filter((comment) => comment._id !== commentId)
+        );
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText || "댓글 삭제에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("댓글 삭제 중 오류 발생:", err);
+      alert("댓글 삭제에 실패했습니다.");
+    }
+  };  
+
+  const handleCommentPost = async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    const commentContent = inputValue;
+
+    if (!accessToken) {
       throw new Error("User is not authenticated.");
     }
-  
+
     if (!commentContent) {
       throw new Error("Please enter a comment.");
     }
-  
+
     const commentData = {
       content: commentContent,
-      userId: id,  
-      postId: postId,  
-      parentId: parentId || null,  // 대댓글인 경우 부모 댓글 ID 포함
+      userId: id,
+      postId: postId,
+      parentId: parentId || null,
     };
-  
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/comments/`,
@@ -145,31 +187,30 @@ function ViewPost() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           credentials: "include",
           body: JSON.stringify(commentData),
         }
       );
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to post the comment.");
       }
-  
+
       const data = await response.json();
       setComments((prevComments) => [...prevComments, data.comment]);
-      setInputValue("");  // 댓글 입력란 초기화
-      setParentId(null);  // 댓글 작성 후 parentId 초기화
+      setInputValue("");
+      setParentId(null);
     } catch (error) {
       setError(error.message || "An unexpected error occurred.");
     }
   };
 
   const handleEditPost = async () => {
-    const authToken = localStorage.getItem("authToken");
-    
-    if (!authToken) {
+    let accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
       throw new Error("User is not authenticated.");
     }
 
@@ -184,12 +225,12 @@ function ViewPost() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/boards/1/posts/${postId}`,
+        `http://localhost:5000/boards/${boardId}/posts/${postId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           credentials: "include",
           body: JSON.stringify(updatedPost),
@@ -202,8 +243,9 @@ function ViewPost() {
       }
 
       const data = await response.json();
-      setPost(data.post); // Update the post data after successful update
-      setIsEditMode(false); // Exit edit mode
+      setPost(data.post);
+      setIsEditMode(false);
+      navigate(`/boards/study/posts`);
     } catch (error) {
       setError(error.message || "An unexpected error occurred.");
     }
@@ -227,38 +269,56 @@ function ViewPost() {
     return <div>Post not found</div>;
   }
 
+  const handleLike = () => {
+  };
+
   return (
     <div className="w-screen h-[1000px] p-4 justify-center items-center">
       <Card className="w-[1200px] h-[600px] mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold flex">
+          <CardTitle className="text-2xl font-bold flex justify-between">
             {isEditMode ? (
-              <Input 
-                value={editedTitle} 
-                onChange={(e) => setEditedTitle(e.target.value)} 
+              <Input
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
                 placeholder="Enter the title"
               />
             ) : (
               post.title
             )}
-            {post.userId === id && !isEditMode && (
-              <div className='justify-self-end'>
-                <Button className="bg-blue-500 text-white" onClick={() => setIsEditMode(true)}>
-                  Edit Post
-                </Button>
-                <Button className="bg-red-500 text-white" onClick={handleDeletePost}>
-                  Delete Post
-                </Button>
-              </div>
-            )}
-            {isEditMode && (
-              <div className="mt-4">
-                <Button className="bg-green-500 text-white" onClick={handleEditPost}>
-                  Save Changes
-                </Button>
-                <Button className="bg-gray-500 text-white" onClick={handleCancelEdit}>
-                  Cancel
-                </Button>
+            {post.userId === id && (
+              <div className="flex gap-2">
+                {isEditMode ? (
+                  <>
+                    <Button
+                      className="bg-green-500 text-white"
+                      onClick={handleEditPost}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      className="bg-gray-500 text-white"
+                      onClick={handleCancelEdit}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      className="bg-blue-500 text-white"
+                      onClick={() => setIsEditMode(true)}
+                    >
+                      Edit Post
+                    </Button>
+                    <Button
+                      className="bg-red-500 text-white"
+                      onClick={handleDeletePost}
+                    >
+                      Delete Post
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </CardTitle>
@@ -277,39 +337,50 @@ function ViewPost() {
           ) : (
             <p className="text-lg">{post.content}</p>
           )}
+          <Heart className="cursor-pointer" onClick={handleLike} />
         </CardContent>
       </Card>
       <div className="w-screen p-4 justify-center items-center">
-        <h3 className="w-[1100px] justify-center items-center mx-auto text-xl font-bold mt-5">Comments</h3>
+        <h3 className="w-[1100px] justify-center items-center mx-auto text-xl font-bold mt-5">
+          Comments
+        </h3>
         {comments.length > 0 ? (
           <div className="mt-4 w-[1200px] justify-center items-center mx-auto">
-            {comments.map(comment => (
-              <div key={comment._id} className="p-4 border border-gray-300 rounded-md mb-4">
+            {comments.map((comment) => (
+              <div
+                key={comment._id}
+                className="p-4 border border-gray-300 rounded-md mb-4"
+              >
                 <p className="font-semibold">User {comment.userId}</p>
                 <p className="text-sm text-gray-500">
                   {new Date(comment.createdAt).toLocaleString()}
                 </p>
                 <p>{comment.content}</p>
                 {comment.userId === id && (
-                  <div className="mt-4">
-                    <Button className="bg-red-500 text-white" onClick={() => handleDeleteComment(comment._id)}>
-                      Delete Comment
-                    </Button>
-                  </div>
-                )}
+                <div className="mt-4">
+                  <Button
+                    className="bg-red-500 text-white"
+                    onClick={() => handleDeleteComment(comment._id)} // 댓글 ID를 전달
+                  >
+                    Delete Comment
+                  </Button>
+                </div>
+              )}
               </div>
             ))}
           </div>
         ) : (
-          <p className='w-[1200px] justify-center items-center mx-auto mt-5'>No comments yet.</p>
+          <p className="w-[1200px] justify-center items-center mx-auto mt-5">
+            No comments yet.
+          </p>
         )}
       </div>
-      <div className='flex w-[1200px] mx-auto pb-24'>
-        <Input 
-          placeholder="Leave a comment!" 
-          value={inputValue} 
+      <div className="flex w-[1200px] mx-auto pb-24">
+        <Input
+          placeholder="Leave a comment!"
+          value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className='w-[600px] place-self-start ml-4 mr-10'
+          className="w-[600px] place-self-start ml-4 mr-10"
         />
         <Button onClick={handleCommentPost}>Post</Button>
       </div>

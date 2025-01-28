@@ -3,9 +3,9 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import useUserStore from "@/stores/userStore";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -16,15 +16,16 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
-  const { username, avatar_url, setUser } = useUserStore();
+  const { username, avatar_url, bio, setUser } = useUserStore();
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedUsername, setEditedUsername] = useState(username);
   const [editedAvatarPreview, setEditedAvatarPreview] = useState(avatar_url);
+  const [editedBio, setEditedBio] = useState(bio);
   const [selectedTechStack, setSelectedTechStack] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const handleSaveProfile = () => {
-    setUser({ username: editedUsername, avatar_url: editedAvatarPreview });
+    setUser({ username: editedUsername, avatar_url: editedAvatarPreview, bio: editedBio });
     setIsEditMode(false);
   };
 
@@ -49,6 +50,45 @@ const Profile = () => {
 
   const handlePost = () => {
     navigate("/newpost");
+  };
+
+  // handleUpdateBio 함수
+  const handleUpdateBio = async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+      const userId = userInfo.id;
+      console.log(userId);
+      console.log(accessToken);
+
+      if (!accessToken) {
+        throw new Error("User is not authenticated.");
+      }
+
+      const response = await fetch(
+        `http://localhost:5000/auth/user/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({ bio: editedBio }),
+        }
+      );
+      
+      if (response.ok) {
+        alert("바이오가 성공적으로 업데이트 되었습니다.");
+        navigate("/profile");
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText || "바이오 업데이트에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("바이오 업데이트 중 오류 발생:", err);
+      alert("바이오 업데이트에 실패했습니다.");
+    }
   };
 
   return (
@@ -199,13 +239,30 @@ const Profile = () => {
             <CardTitle>About Me</CardTitle>
           </CardHeader>
           <CardContent>
-            <Textarea
-              className="h-[230px]"
-              placeholder="Please Introduce yourself to other Developers in DevMate!"
-            />
+            {isEditMode ? (
+              <Textarea
+                className="h-[230px]"
+                value={editedBio}
+                onChange={(e) => setEditedBio(e.target.value)}
+                placeholder="Please Introduce yourself to other Developers in DevMate!"
+              />
+            ) : (
+              <p>{bio || "Introduce yourself here!"}</p>
+            )}
           </CardContent>
           <CardFooter>
-            <Button>Save!</Button>
+            {isEditMode ? (
+              <>
+                <Button className="bg-green-500 text-white" onClick={handleUpdateBio}>
+                  Save Bio
+                </Button>
+                <Button className="bg-gray-500 text-white" onClick={() => setIsEditMode(false)}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setIsEditMode(true)}>Edit Bio</Button>
+            )}
           </CardFooter>
         </Card>
       </div>
