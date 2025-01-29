@@ -17,7 +17,7 @@ const App = () => {
           <Route path='/profile' element={<Profile />} />
           <Route path='/newpost' element={<NewPost />} />
           <Route path="/auth/github/callback" element={<AuthCallback />} />
-          <Route path="/board/:postId" element={<ViewPost />} />
+          <Route path="/boards/:boardId/:postId" element={<ViewPost />} />
         </Routes>
       </Layout>
     </BrowserRouter>

@@ -41,7 +41,7 @@ function Board() {
   };
 
   const handleViewPost = (postId: string) => {
-    navigate(`/board/${postId}`);
+    navigate(`/boards/${boardId}/${postId}`);
   };
 
   const handlePageChange = (page: number) => {

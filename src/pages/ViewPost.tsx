@@ -29,16 +29,17 @@ interface Comment {
   parentId?: string | null;
 }
 
-interface CommentResponse {
+interface Reply {
   success: boolean;
   comments: Comment[];
 }
 
 function ViewPost() {
-  const { postId } = useParams<{ postId: string }>();
-  const { commentId } = useParams<{ postId: string }>();
+  const { boardId, postId } = useParams<{ boardId: string; postId: string }>();
+  const { commentId } = useParams<{ commentId: string }>();
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [replies, setReplies] = useState<Comment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -46,10 +47,10 @@ function ViewPost() {
   const [inputValue, setInputValue] = useState<string>('');
   const [parentId, setParentId] = useState<string | null>(null);
   const [isReplyInputVisible, setIsReplyInputVisible] = useState<{ [key: string]: boolean }>({});
+  const [clickedCommentId, setClickedCommentId] = useState<string | null>(null);  // Track clicked comment
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState<string>('');
   const [editedContent, setEditedContent] = useState<string>('');
-  const [boardId, setBoardId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!postId) {
@@ -77,7 +78,7 @@ function ViewPost() {
 
     // Fetch the comments data
     axios
-      .get<CommentResponse>(`http://localhost:5000/comments/${postId}`)
+      .get<{ success: boolean, comments: Comment[] }>(`http://localhost:5000/comments/${postId}`)
       .then(response => {
         if (response.data.success && response.data.comments) {
           setComments(response.data.comments); // Update comments state
@@ -93,6 +94,24 @@ function ViewPost() {
         setLoading(false);
       });
   }, [postId]);
+
+  useEffect(() => {
+    if (commentId) {
+      axios
+        .get<Reply>(`http://localhost:5000/comments/${commentId}`)
+        .then(response => {
+          if (response.data.success) {
+            setReplies(response.data.comments);
+          } else {
+            throw new Error("No replies found for this comment");
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching replies:", err);
+          setError(err.message || "Failed to load replies");
+        });
+    }
+  }, [commentId]);
 
   const handleDeletePost = async () => {
     try {
@@ -251,10 +270,47 @@ function ViewPost() {
     }
   };
 
+  const handleLike = async () => {
+    let accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("User is not authenticated.");
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/boards/${boardId}/posts/like/${postId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include",
+          body: JSON.stringify(id),
+        }
+      );
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to update the post.");
+      }
+    } catch (error) {
+      setError(error.message || "An unexpected error occurred.");
+    }
+  };
+
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditedTitle(post?.title || '');
     setEditedContent(post?.content || '');
+  };
+
+  const handleClickComment = (commentId: string) => {
+    // Only allow showing the reply section for root comments
+    const comment = comments.find(comment => comment._id === commentId);
+    if (comment && !comment.parentId) {
+      setClickedCommentId(commentId);
+      setParentId(commentId);
+    }
   };
 
   if (loading) {
@@ -268,9 +324,6 @@ function ViewPost() {
   if (!post) {
     return <div>Post not found</div>;
   }
-
-  const handleLike = () => {
-  };
 
   return (
     <div className="w-screen h-[1000px] p-4 justify-center items-center">
@@ -349,23 +402,49 @@ function ViewPost() {
             {comments.map((comment) => (
               <div
                 key={comment._id}
-                className="p-4 border border-gray-300 rounded-md mb-4"
+                className={`p-4 border border-gray-300 rounded-md mb-4 ${
+                  comment.parentId ? 'ml-8' : ''
+                }`}
               >
                 <p className="font-semibold">User {comment.userId}</p>
                 <p className="text-sm text-gray-500">
                   {new Date(comment.createdAt).toLocaleString()}
                 </p>
-                <p>{comment.content}</p>
+                <p
+                  onClick={() => handleClickComment(comment._id)}
+                  className="cursor-pointer"
+                >
+                  {comment.parentId && "↳ "}
+                  {comment.content}
+                </p>
                 {comment.userId === id && (
-                <div className="mt-4">
-                  <Button
-                    className="bg-red-500 text-white"
-                    onClick={() => handleDeleteComment(comment._id)} // 댓글 ID를 전달
-                  >
-                    Delete Comment
-                  </Button>
-                </div>
-              )}
+                  <div className="mt-4">
+                    <Button
+                      className="bg-red-500 text-white"
+                      onClick={() => handleDeleteComment(comment._id)}
+                    >
+                      Delete Comment
+                    </Button>
+                  </div>
+                )}
+
+                {/* Reply input appears only for root comments when clicked */}
+                {clickedCommentId === comment._id && !comment.parentId && (
+                  <div className="mt-4">
+                    <Input
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder="Write a reply..."
+                      className="w-full"
+                    />
+                    <Button
+                      onClick={handleCommentPost}
+                      className="mt-2"
+                    >
+                      Post Reply
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
