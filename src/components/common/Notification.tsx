@@ -1,46 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useEffect, useState } from "react";
 
-interface Notification {
-  _id: string;
-  message: string;
-  createdAt: string;
-  postId: string;
-}
-
-const NotificationList = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+const Notification = () => {
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    const userId = 'userId'; 
-    axios.get(`/api/notifications`, { params: { userId } })
-      .then(response => {
-        setNotifications(response.data);
-      })
-      .catch(error => {
-        console.error('알림을 가져오는 데 실패했습니다:', error);
-      });
-  }, []);
+    const eventSource = new EventSource("https://your-api.com/notifications");
 
-  const handleNotificationClick = (postId: string) => {
-    window.location.href = `/post/${postId}`;
-  };
+    eventSource.onmessage = (event) => {
+      const newNotification = JSON.parse(event.data);
+      setNotifications((prev) => [...prev, newNotification]);
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("SSE Error:", error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   return (
     <div>
       <h2>알림</h2>
-      {notifications.length > 0 ? (
-        notifications.map(notification => (
-          <div key={notification._id} onClick={() => handleNotificationClick(notification.postId)}>
-            <p>{notification.message}</p>
-            <small>{new Date(notification.createdAt).toLocaleString()}</small>
-          </div>
-        ))
-      ) : (
-        <p>새로운 알림이 없습니다.</p>
-      )}
+      <ul>
+        {notifications.map((noti, index) => (
+          <li key={index}>{noti.message}</li>
+        ))}
+      </ul>
     </div>
   );
 };
 
-export default NotificationList;
+export default Notification;

@@ -4,27 +4,28 @@ import useUserStore from "@/stores/userStore";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { id, } = useUserStore();
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     const code = query.get("code");
-
+  
     if (code) {
       const handleLoginSuccess = async (code: string) => {
         try {
           console.log("GitHub 인증 코드:", code);
-
+  
           const response = await fetch(
             `http://localhost:5000/auth/github/callback?code=${code}`
           );
-
+  
           if (response.ok) {
             const data = await response.json();
             console.log("로그인 성공 데이터:", data);
-            
+  
             localStorage.setItem("accessToken", data.token.accessToken);
             localStorage.setItem("userInfo", JSON.stringify(data.user));
-
+  
             useUserStore.setState({
               username: data.user.username,
               id: data.user.id,
@@ -32,9 +33,11 @@ const AuthCallback = () => {
               userStatus: "SIGNED_IN",
             });
 
-            console.log(data.token.accessToken, data.user);
-            navigate("/profile");
+            console.log()
 
+            setTimeout(() => {
+              navigate("/boards/study/posts");
+            }, 0);
           } else {
             console.error("Login callback failed:", await response.text());
             alert("로그인 실패");
@@ -44,14 +47,13 @@ const AuthCallback = () => {
           alert("로그인 중 에러가 발생했습니다.");
         }
       };
-
+  
       handleLoginSuccess(code);
-    
     } else {
       console.error("GitHub 인증 코드가 URL에 없습니다.");
-      alert("GitHub 인증 코드가 없습니다.");
     }
-  }, [navigate]);
+  }, [navigate, id]);
+  
 
   return <div>처리 중입니다...</div>;
 };

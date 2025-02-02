@@ -51,6 +51,8 @@ function ViewPost() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState<string>('');
   const [editedContent, setEditedContent] = useState<string>('');
+  const [liked, setLiked] = useState<boolean>(false);
+  const [likeCount, setLikecount] = useState<number>(0);
 
   useEffect(() => {
     if (!postId) {
@@ -61,12 +63,13 @@ function ViewPost() {
 
     // Fetch the post data
     axios
-      .get(`http://localhost:5000/boards/1/posts/${postId}?currentPage=1&limit=4`)
+      .get(`http://localhost:5000/boards/1/posts/${postId}`)
       .then(response => {
         if (response.data && response.data.post) {
           setPost(response.data.post);
           setEditedTitle(response.data.post.title);
           setEditedContent(response.data.post.content);
+          setLikecount(response.data.post.likeCount)
         } else {
           throw new Error("Post not found");
         }
@@ -201,7 +204,7 @@ function ViewPost() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/comments/`,
+        "http://localhost:5000/comments/",
         {
           method: "POST",
           headers: {
@@ -222,6 +225,7 @@ function ViewPost() {
       setComments((prevComments) => [...prevComments, data.comment]);
       setInputValue("");
       setParentId(null);
+      navigate(`/boards/${boardId}/${post}`)
     } catch (error) {
       setError(error.message || "An unexpected error occurred.");
     }
@@ -264,19 +268,21 @@ function ViewPost() {
       const data = await response.json();
       setPost(data.post);
       setIsEditMode(false);
-      navigate(`/boards/study/posts`);
+      navigate(`/boards/${boardId}/${postId}`);
     } catch (error) {
       setError(error.message || "An unexpected error occurred.");
     }
   };
 
   const handleLike = async () => {
-    let accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("User is not authenticated.");
-    }
+    if (!id || !post) return;
 
     try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("User is not authenticated.");
+      }
+
       const response = await fetch(
         `http://localhost:5000/boards/${boardId}/posts/like/${postId}`,
         {
@@ -286,12 +292,19 @@ function ViewPost() {
             Authorization: `Bearer ${accessToken}`,
           },
           credentials: "include",
-          body: JSON.stringify(id),
+          body: JSON.stringify({ userId: id }),
         }
       );
-      if (!response.ok) {
+
+      if (response.ok) {
+        setLiked(prevLiked => {
+          const newLikedState = !prevLiked;
+          setLikecount(prevCount => newLikedState ? prevCount + 1 : prevCount - 1);
+          return newLikedState;
+        });
+      } else {
         const errorText = await response.text();
-        throw new Error(errorText || "Failed to update the post.");
+        throw new Error(errorText || "Failed to update the like status.");
       }
     } catch (error) {
       setError(error.message || "An unexpected error occurred.");
@@ -380,18 +393,23 @@ function ViewPost() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isEditMode ? (
-            <textarea
-              className="w-full h-40 border border-gray-300 p-2 rounded"
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              placeholder="Enter the content"
-            />
-          ) : (
-            <p className="text-lg">{post.content}</p>
-          )}
-          <Heart className="cursor-pointer" onClick={handleLike} />
-        </CardContent>
+            {isEditMode ? (
+              <textarea
+                className="w-full h-40 border border-gray-300 p-2 rounded"
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                placeholder="Enter the content"
+              />
+            ) : (
+              <p className="text-lg">{post.content}</p>
+            )}
+            <div className="mt-64 w-[80px] h-[80px] flex justify-center items-center border border-gray-300 p-2 rounded-md">
+              <Heart className={`cursor-pointer ${liked ? 'text-red-500' : 'text-gray-500'}`}
+              onClick={handleLike}
+              fill={liked ? 'red' : 'none'}/>
+              {likeCount}
+            </div>
+          </CardContent>
       </Card>
       <div className="w-screen p-4 justify-center items-center">
         <h3 className="w-[1100px] justify-center items-center mx-auto text-xl font-bold mt-5">

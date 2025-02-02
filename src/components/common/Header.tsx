@@ -39,11 +39,8 @@ const Header = () => {
 
   return (
     <div className="flex border-b w-screen fixed top-0 p-4 bg-white">
-      <h1
-        className="text-lg font-bold text-left pt-1 hover:cursor-pointer"
-        onClick={handleMain}
-      >
-        DevMate
+      <h1 className="text-lg font-bold text-left pt-1 hover:cursor-pointer" onClick={handleMain}>
+        <span className="text-blue-500">Dev</span>Mate
       </h1>
       <span className="text-black mt-2 ml-6">|</span>
       <div className="grow">
@@ -111,7 +108,7 @@ const Header = () => {
         )}
       </div>
     </div>
-  );
+  );  
 };
 
 export default Header;
