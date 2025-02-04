@@ -29,6 +29,7 @@ import { Heart } from "lucide-react";
 interface Post {
   _id: string;
   boardId: string;
+  username: string;
   title: string;
   content: string;
   createdAt: string;
@@ -81,7 +82,6 @@ function Board() {
       .get(`http://localhost:5000/boards/${boardId}/posts`, {
         params: {
           currentPage: currentPage,
-          limit: postsPerPage,
         },
       })
       .then((response) => {
@@ -90,6 +90,7 @@ function Board() {
           Array.isArray(response.data.posts) &&
           typeof response.data.total === "number"
         ) {
+          console.log(response.data)
           setPosts(response.data.posts);
           setTotalPosts(response.data.total);
         } else {
@@ -107,7 +108,7 @@ function Board() {
   }
 
   return (
-    <div>
+    <div className="pt-8">
       <div className="ml-12 ">
       <Breadcrumb>
         <BreadcrumbList>
@@ -134,8 +135,9 @@ function Board() {
               onClick={() => handleViewPost(post._id)}
             >
               <CardHeader>
-                <CardTitle>
-                  {post.title}  
+                <CardTitle className="flex">
+                  {post.title}
+                  <div className="text-[15px] text-gray-500 self-center ml-5">{post.username}</div>
                 </CardTitle>
               </CardHeader>
               <CardFooter className="mt-6 flex justify-between items-center gap-4">
@@ -161,12 +163,12 @@ function Board() {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={handlePrevPage}
-                className={currentPage === 1 ? "disabled" : ""}
+                onClick={currentPage === 1 ? undefined : handlePrevPage} 
+                className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} 
               />
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, index) => (
-              <PaginationItem key={index + 1}>
+              <PaginationItem key={index + 1} className="cursor-pointer">
                 <PaginationLink
                   isActive={currentPage === index + 1}
                   onClick={() => handlePageChange(index + 1)}
@@ -177,8 +179,8 @@ function Board() {
             ))}
             <PaginationItem>
               <PaginationNext
-                onClick={handleNextPage}
-                className={currentPage === totalPages ? "disabled" : ""}
+                onClick={currentPage === totalPages ? undefined : handleNextPage} 
+                className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} 
               />
             </PaginationItem>
           </PaginationContent>

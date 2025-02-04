@@ -5,6 +5,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 
@@ -36,9 +38,8 @@ const Main = () => {
   };
 
   return (
-    <div className="w-full h-full">
-      {/* Hero Section */}
-      <div className="flex flex-col justify-center items-center h-[50vh] p-12">
+    <div className="relative w-full items-center justify-center">
+      <div className="flex flex-col justify-center items-center h-[50vh]">
         <h1 className="text-5xl text-center font-bold leading-tight mb-4">
           Welcome to <br />
           <span className="text-blue-500">Dev</span>Mate <br />
@@ -58,25 +59,25 @@ const Main = () => {
         </div>
       </div>
 
-      {/* Carousel Section */}
-      <div className="py-8">
         <Carousel plugins={[Autoplay({ delay: 8000 })]}>
-          <CarouselContent>
+          <CarouselContent> 
             {['study', 'toy', 'code'].map((boardId, index) => (
               <CarouselItem key={index}>
-                <div className="p-4" onClick={() => handleCardClick(boardId)}>
-                  <Card className="cursor-pointer hover:scale-105 transition-all duration-300 ease-in-out">
-                    <CardContent className="flex flex-col items-center justify-center bg-white p-6 rounded-lg shadow-lg">
+                <div className="p-8" onClick={() => handleCardClick(boardId)}>
+                  <Card className="cursor-pointer  hover:-translate-y-1 hover:shadow-md transition-all duration-300 ease-in-out">
+                    <CardContent className="flex flex-col items-center justify-center rounded-lg">
                       <img
                         src={boardImages[boardId]}
                         alt={boardId}
-                        className="w-[400px] h-[400px] object-cover rounded-lg shadow-md mb-4"
+                        className="w-[300px] h-[300px] object-cover rounded-lg "
                       />
                       <div className="text-center">
                         <span className="text-3xl font-semibold text-gray-800">{boardId.charAt(0).toUpperCase() + boardId.slice(1)}</span>
                         <p className="mt-4 text-gray-600">{boardDescriptions[boardId]}</p>
                       </div>
                     </CardContent>
+                    <CarouselNext/>
+                    <CarouselPrevious/>
                   </Card>
                 </div>
               </CarouselItem>
@@ -84,7 +85,6 @@ const Main = () => {
           </CarouselContent>
         </Carousel>
       </div>
-    </div>
   );
 };
 

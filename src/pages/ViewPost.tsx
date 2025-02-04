@@ -339,10 +339,10 @@ function ViewPost() {
   }
 
   return (
-    <div className="w-screen h-[1000px] p-4 justify-center items-center">
-      <Card className="w-[1200px] h-[600px] mx-auto">
+    <div className="w-full pt-12 justify-center items-center">
+      <Card className="w-2/3 mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold flex justify-between">
+          <CardTitle className="text-2xl font-bold flex justify-between mb-1">
             {isEditMode ? (
               <Input
                 value={editedTitle}
@@ -403,7 +403,8 @@ function ViewPost() {
             ) : (
               <p className="text-lg">{post.content}</p>
             )}
-            <div className="mt-64 w-[80px] h-[80px] flex justify-center items-center border border-gray-300 p-2 rounded-md">
+            <div className="place-self-center mt-64 w-[180px] h-[60px] flex justify-center items-center border border-gray-300 p-2 rounded-md gap-2">
+              Like This Post!
               <Heart className={`cursor-pointer ${liked ? 'text-red-500' : 'text-gray-500'}`}
               onClick={handleLike}
               fill={liked ? 'red' : 'none'}/>
@@ -411,12 +412,12 @@ function ViewPost() {
             </div>
           </CardContent>
       </Card>
-      <div className="w-screen p-4 justify-center items-center">
-        <h3 className="w-[1100px] justify-center items-center mx-auto text-xl font-bold mt-5">
+      <div className="w-2/3 mx-auto justify-center items-center">
+        <h3 className=" justify-center items-center mx-auto text-xl font-bold mt-5">
           Comments
         </h3>
         {comments.length > 0 ? (
-          <div className="mt-4 w-[1200px] justify-center items-center mx-auto">
+          <div className="mt-4 justify-center items-center mx-auto">
             {comments.map((comment) => (
               <div
                 key={comment._id}
@@ -446,7 +447,6 @@ function ViewPost() {
                   </div>
                 )}
 
-                {/* Reply input appears only for root comments when clicked */}
                 {clickedCommentId === comment._id && !comment.parentId && (
                   <div className="mt-4">
                     <Input
@@ -457,7 +457,7 @@ function ViewPost() {
                     />
                     <Button
                       onClick={handleCommentPost}
-                      className="mt-2"
+                      className="mt-4"
                     >
                       Post Reply
                     </Button>
@@ -472,14 +472,14 @@ function ViewPost() {
           </p>
         )}
       </div>
-      <div className="flex w-[1200px] mx-auto pb-24">
+      <div className="flex w-2/3 mx-auto">
         <Input
           placeholder="Leave a comment!"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className="w-[600px] place-self-start ml-4 mr-10"
+          className="place-self-start mb-4"
         />
-        <Button onClick={handleCommentPost}>Post</Button>
+        <Button className="ml-4"onClick={handleCommentPost}>Post</Button>
       </div>
     </div>
   );
