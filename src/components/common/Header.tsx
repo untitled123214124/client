@@ -8,13 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import useAuth from "@/hooks/useAuth";
 import useSignOut from "@/hooks/useSignOut";
 import useNotifications from "@/hooks/useNotifications";
 
 const Header = () => {
-  useAuth();
-
   const { username, userStatus } = useUserStore();
   const navigate = useNavigate();
 
@@ -38,8 +35,8 @@ const Header = () => {
   const { notifications } = useNotifications();
 
   return (
-    <div className="flex border-b w-screen fixed top-0 p-4 bg-white">
-      <h1 className="text-lg font-bold text-left pt-1 hover:cursor-pointer" onClick={handleMain}>
+    <div className="flex fixed border-b w-screen top-0 p-4 z-10 h-18 bg-white">
+      <h1 className="text-lg font-bold text-left mt-[7px] hover:cursor-pointer ml-3" onClick={handleMain}>
         <span className="text-blue-500">Dev</span>Mate
       </h1>
       <span className="text-black mt-2 ml-6">|</span>

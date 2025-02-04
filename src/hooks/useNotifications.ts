@@ -1,4 +1,3 @@
-// 알림 로직직
 import { useState } from "react";
 
 const useNotifications = () => {

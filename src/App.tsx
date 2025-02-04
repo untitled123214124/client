@@ -3,7 +3,7 @@ import { Routes, Route, BrowserRouter } from "react-router-dom";
 import Main from './pages/Main';
 import Board from './pages/Board';
 import NewPost from './pages/NewPost';
-import AuthCallback from './pages/AuthCallback';
+import AuthCallback from './pages/LoginCallback';
 import Profile from './pages/Profile';
 import ViewPost from './pages/ViewPost';
 

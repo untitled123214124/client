@@ -1,33 +1,36 @@
-// 로그인 로직
-import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import useUserStore from "@/stores/userStore";
 
 const useAuth = () => {
-  useEffect(() => {
-    const userInfo = localStorage.getItem("userInfo");
-    const accessToken = localStorage.getItem("accessToken");
+  const navigate = useNavigate();
+  const { setUser } = useUserStore();
 
-    if (userInfo && accessToken) {
-      try {
-        const parsedUserInfo = JSON.parse(userInfo);
-        useUserStore.setState({
-          username: parsedUserInfo.username,
-          userStatus: "SIGNED_IN",
-        });
-      } catch (error) {
-        console.error("Failed to parse userInfo:", error);
-        useUserStore.setState({
-          userStatus: "SIGNED_OUT",
-          username: "",
-        });
+  const handleLogin = async (code: string) => {
+    try {
+      const response = await fetch(`http://localhost:5000/auth/github/callback?code=${code}`);
+
+      if (response.ok) {
+        const data = await response.json();
+
+        localStorage.setItem("accessToken", data.token.accessToken);
+        localStorage.setItem("userInfo", JSON.stringify(data.user));
+
+        const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}")
+
+        setUser(userInfo.username, userInfo.id, userInfo.avatar_url, userInfo.bio, "SIGNED_IN")
+
+        navigate("/boards/study/posts");
+      } else {
+        console.error("Login callback failed:", await response.text());
+        alert("로그인 실패");
       }
-    } else {
-      useUserStore.setState({
-        userStatus: "SIGNED_OUT",
-        username: "",
-      });
+    } catch (error) {
+      console.error("Error during login callback:", error);
+      alert("로그인 중 에러가 발생했습니다.");
     }
-  }, []);
+  };
+
+  return { handleLogin };
 };
 
 export default useAuth;

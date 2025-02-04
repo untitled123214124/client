@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Card,
-  CardContent,
-  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -16,7 +15,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { Heart } from "lucide-react";
 
 interface Post {
   _id: string;
@@ -24,15 +32,16 @@ interface Post {
   title: string;
   content: string;
   createdAt: string;
+  likeCount: number;
 }
 
 function Board() {
-  const { boardId } = useParams();
+  const { boardId } = useParams<{ boardId: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const postsPerPage = 10;
+  const postsPerPage = 6;
   const totalPages = Math.ceil(totalPosts / postsPerPage);
   const navigate = useNavigate();
 
@@ -62,11 +71,11 @@ function Board() {
 
   useEffect(() => {
     if (!boardId) {
-      console.error("boardId is undefined!"); // boardId가 undefined일 경우 경고
+      console.error("boardId is undefined!"); 
       return;
     }
 
-    console.log("Requesting posts for boardId:", boardId); // boardId 값 확인
+    console.log("Requesting posts for boardId:", boardId);
 
     axios
       .get(`http://localhost:5000/boards/${boardId}/posts`, {
@@ -99,21 +108,45 @@ function Board() {
 
   return (
     <div>
-      <div className="flex flex-wrap h-[1000px] p-8 justify-start gap-8">
+      <div className="ml-12 ">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/">Main</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+          <BreadcrumbPage>
+                <Link to={`/boards/${boardId}/posts`}>
+                 {boardId.charAt(0).toUpperCase() + boardId.slice(1)}
+                </Link>
+              </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+      </div>
+            <div className="p-8 flex flex-col justify-start">
         {posts.length > 0 ? (
           posts.map((post) => (
             <Card
               key={post._id}
-              className="w-[600px] h-[270px] mb-6 cursor-pointer"
+              className="flex h-[120px] mb-6 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-transform duration-200 items-center justify-between px-3"
               onClick={() => handleViewPost(post._id)}
             >
               <CardHeader>
-                <CardTitle>{post.title}</CardTitle>
-                <CardDescription>{post.content}</CardDescription>
+                <CardTitle>
+                  {post.title}  
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardFooter className="mt-6 flex justify-between items-center gap-4">
                 <small>{new Date(post.createdAt).toLocaleString()}</small>
-              </CardContent>
+                <div className="flex items-center gap-1">
+                <Heart 
+                  className={`w-3 h-3 ${post.likeCount ? 'fill-red-500 text-red-500' : 'text-black'}`} 
+                />
+                <small>{post.likeCount !== undefined && post.likeCount !== null ? post.likeCount : 0}</small>
+              </div>
+              </CardFooter>
             </Card>
           ))
         ) : (
