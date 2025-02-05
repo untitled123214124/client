@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 
+// boardId에 사용할 수 있는 값을 명확히 지정
+type BoardId = "study" | "toy" | "code";
+
 const Main = () => {
   const navigate = useNavigate();
 
@@ -21,19 +24,20 @@ const Main = () => {
     navigate(`/boards/`);
   };
 
-  const boardImages = {
+  const boardImages: Record<BoardId, string> = {
     study: "/study.jpg",
     toy: "/toy.jpg",
     code: "/code.jpg",
   };
 
-  const boardDescriptions = {
+  const boardDescriptions: Record<BoardId, string> = {
     study: "A place for focused learning and study sessions, share resources and study together.",
     toy: "A fun space for exploring creative toy projects and ideas.",
     code: "Share your coding projects and get feedback from peers in the community.",
   };
 
-  const handleCardClick = (boardId) => {
+  // boardId는 BoardId 타입으로 지정하여 타입 안정성 확보
+  const handleCardClick = (boardId: BoardId) => {
     navigate(`/boards/${boardId}/posts`);
   };
 
@@ -59,32 +63,32 @@ const Main = () => {
         </div>
       </div>
 
-        <Carousel plugins={[Autoplay({ delay: 8000 })]}>
-          <CarouselContent> 
-            {['study', 'toy', 'code'].map((boardId, index) => (
-              <CarouselItem key={index}>
-                <div className="p-8" onClick={() => handleCardClick(boardId)}>
-                  <Card className="cursor-pointer  hover:-translate-y-1 hover:shadow-md transition-all duration-300 ease-in-out">
-                    <CardContent className="flex flex-col items-center justify-center rounded-lg">
-                      <img
-                        src={boardImages[boardId]}
-                        alt={boardId}
-                        className="w-[300px] h-[300px] object-cover rounded-lg "
-                      />
-                      <div className="text-center">
-                        <span className="text-3xl font-semibold text-gray-800">{boardId.charAt(0).toUpperCase() + boardId.slice(1)}</span>
-                        <p className="mt-4 text-gray-600">{boardDescriptions[boardId]}</p>
-                      </div>
-                    </CardContent>
-                    <CarouselNext/>
-                    <CarouselPrevious/>
-                  </Card>
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
-      </div>
+      <Carousel plugins={[Autoplay({ delay: 8000 })]}>
+        <CarouselContent>
+          {['study', 'toy', 'code'].map((boardId) => (
+            <CarouselItem key={boardId}>
+              <div className="p-8" onClick={() => handleCardClick(boardId as BoardId)}>
+                <Card className="cursor-pointer  hover:-translate-y-1 hover:shadow-md transition-all duration-300 ease-in-out">
+                  <CardContent className="flex flex-col items-center justify-center rounded-lg">
+                    <img
+                      src={boardImages[boardId as BoardId]}
+                      alt={boardId}
+                      className="w-[300px] h-[300px] object-cover rounded-lg "
+                    />
+                    <div className="text-center">
+                      <span className="text-3xl font-semibold text-gray-800">{boardId.charAt(0).toUpperCase() + boardId.slice(1)}</span>
+                      <p className="mt-4 text-gray-600">{boardDescriptions[boardId as BoardId]}</p>
+                    </div>
+                  </CardContent>
+                  <CarouselNext/>
+                  <CarouselPrevious/>
+                </Card>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+    </div>
   );
 };
 

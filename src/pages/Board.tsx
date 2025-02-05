@@ -22,7 +22,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+} from "@/components/ui/breadcrumb";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 
@@ -72,7 +72,8 @@ function Board() {
 
   useEffect(() => {
     if (!boardId) {
-      console.error("boardId is undefined!"); 
+      console.error("boardId is undefined!");
+      setError("Board ID is missing or invalid.");
       return;
     }
 
@@ -90,7 +91,7 @@ function Board() {
           Array.isArray(response.data.posts) &&
           typeof response.data.total === "number"
         ) {
-          console.log(response.data)
+          console.log(response.data);
           setPosts(response.data.posts);
           setTotalPosts(response.data.total);
         } else {
@@ -109,24 +110,25 @@ function Board() {
 
   return (
     <div className="pt-8">
-      <div className="ml-12 ">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/">Main</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-          <BreadcrumbPage>
+      <div className="ml-12">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">Main</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>
                 <Link to={`/boards/${boardId}/posts`}>
-                 {boardId.charAt(0).toUpperCase() + boardId.slice(1)}
+                  {boardId!.charAt(0).toUpperCase() + boardId!.slice(1)}
                 </Link>
               </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
       </div>
-            <div className="p-8 flex flex-col justify-start">
+
+      <div className="p-8 flex flex-col justify-start">
         {posts.length > 0 ? (
           posts.map((post) => (
             <Card
@@ -143,11 +145,11 @@ function Board() {
               <CardFooter className="mt-6 flex justify-between items-center gap-4">
                 <small>{new Date(post.createdAt).toLocaleString()}</small>
                 <div className="flex items-center gap-1">
-                <Heart 
-                  className={`w-3 h-3 ${post.likeCount ? 'fill-red-500 text-red-500' : 'text-black'}`} 
-                />
-                <small>{post.likeCount !== undefined && post.likeCount !== null ? post.likeCount : 0}</small>
-              </div>
+                  <Heart
+                    className={`w-3 h-3 ${post.likeCount ? 'fill-red-500 text-red-500' : 'text-black'}`}
+                  />
+                  <small>{post.likeCount !== undefined && post.likeCount !== null ? post.likeCount : 0}</small>
+                </div>
               </CardFooter>
             </Card>
           ))
@@ -155,16 +157,18 @@ function Board() {
           <div>No posts available</div>
         )}
       </div>
+
       <div className="flex w-screen justify-center items-center">
         <Button onClick={handlePost}>Write New Post</Button>
       </div>
+
       <div className="flex justify-center mt-8">
         <Pagination>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={currentPage === 1 ? undefined : handlePrevPage} 
-                className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} 
+                onClick={currentPage === 1 ? undefined : handlePrevPage}
+                className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
               />
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, index) => (
@@ -179,8 +183,8 @@ function Board() {
             ))}
             <PaginationItem>
               <PaginationNext
-                onClick={currentPage === totalPages ? undefined : handleNextPage} 
-                className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} 
+                onClick={currentPage === totalPages ? undefined : handleNextPage}
+                className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
               />
             </PaginationItem>
           </PaginationContent>

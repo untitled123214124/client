@@ -57,13 +57,13 @@ function NewPost() {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) return; 
   
     setIsSaving(true);
     setError("");
   
     try {
-      const savedData = await editorRef.current.save();
+      const savedData = await editorRef.current!.save();
   
       // 블록에서 텍스트만 추출
       const content = savedData.blocks
@@ -90,7 +90,7 @@ function NewPost() {
         }),
       };
   
-      let response = await fetch(`http://localhost:5000/boards/${boardId}/posts/`, requestOptions);
+      let response = await fetch(`http://localhost:5000/boards/${boardId}/posts/`);
   
       if (response.status === 401) {
         const refreshResponse = await fetch("http://localhost:5000/auth/refresh-token", {
@@ -104,10 +104,9 @@ function NewPost() {
         if (refreshResponse.ok) {
           const data = await refreshResponse.json();
           accessToken = data.accessToken;
-          localStorage.setItem("accessToken", accessToken);
   
           requestOptions.headers["Authorization"] = `Bearer ${accessToken}`;
-          response = await fetch(`http://localhost:5000/boards/${boardId}/posts/`, requestOptions);
+          response = await fetch(`http://localhost:5000/boards/${boardId}/posts/`);
         } else {
           throw new Error("Failed to refresh access token.");
         }
@@ -117,9 +116,13 @@ function NewPost() {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to save the post.");
       }
+
+      if (!boardId) {
+        throw new Error("Board ID is required.");
+      }
   
       navigate(`/boards/${boardId}/posts`);
-    } catch (error) {
+    } catch (error: any) {
       setError(error.message || "An unexpected error occurred.");
     } finally {
       setIsSaving(false);
