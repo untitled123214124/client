@@ -39,9 +39,7 @@ const Profile = () => {
 
   const handleTechStackChange = (value: string) => {
     setSelectedTechStack((prev) =>
-      prev.includes(value)
-        ? prev.filter((item) => item !== value) 
-        : [...prev, value]
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
     );
   };
 
@@ -63,9 +61,6 @@ const Profile = () => {
   const handleUpdateBio = async () => {
     try {
       const accessToken = localStorage.getItem("accessToken");
-      console.log(accessToken)
-      console.log(id)
-
       if (!accessToken || !id) {
         throw new Error("유효한 사용자 정보가 없습니다.");
       }
@@ -88,7 +83,6 @@ const Profile = () => {
       }
 
       const result = await response.json();
-      console.log("Updated User Info:", result);
 
       if (!result.user) throw new Error("서버 응답에 user 데이터가 없습니다.");
 
@@ -108,148 +102,138 @@ const Profile = () => {
   }
 
   return (
-    <div>
-      <div className="w-screen p-8 absolute top-36">
-        <Card className="pt-20 h-[400px]">
-          <CardHeader className="text-center">
-            <CardTitle className="text-5xl mb-6">
-              Welcome back, {userInfo.username}!
-            </CardTitle>
-            <CardDescription>
-              This is your Developer Profile of DevMate.
-            </CardDescription>
-            <CardContent className="items-center">
-              <Button
-                className="w-[300px] h-[60px] text-xl font-semibold mr-6 mt-6 bg-blue-500 hover:bg-blue-600"
-                onClick={handlePost}
-              >
-                Create New Post
-              </Button>
-              <Button className="w-[300px] h-[60px] text-xl font-semibold bg-green-500 hover:bg-green-600">
-                Search Posts
-              </Button>
-            </CardContent>
-          </CardHeader>
-        </Card>
-      </div>
-
-      <div className="w-screen flex p-8 absolute">
-        <Card className="w-1/2 flex-col h-[400px] mr-4">
-          <CardContent className="flex flex-col items-center justify-center h-full">
-            <div
-              className="avatar rounded-full w-24 h-24 bg-cover bg-center mb-6 cursor-pointer relative"
-              style={{
-                backgroundImage: `url(${isEditMode ? editedAvatarPreview : userInfo.avatar_url})`,
-              }}
-              onClick={() =>
-                isEditMode && document.getElementById("avatarInput")?.click()
-              }
-            >
-              {isEditMode && (
-                <>
-                  <input
-                    type="file"
-                    id="avatarInput"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-sm rounded-full">
-                    Change Photo
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="text-lg font-semibold mb-4">{userInfo.username}</div>
-
-            <div className="flex flex-wrap gap-2 mb-6">
-              {selectedTechStack.length > 0 ? (
-                selectedTechStack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="px-3 py-1 bg-blue-200 text-blue-800 rounded-lg"
-                  >
-                    {tech}
-                  </span>
-                ))
-              ) : (
-                <p className="text-gray-500">No Tech Stack Selected</p>
-              )}
-            </div>
-
-            {isEditMode && (
-             <Dialog>
-             <DialogTrigger asChild>
-               <Button>Select Your Tech Stack</Button>
-             </DialogTrigger>
-             <DialogContent>
-               <ToggleGroup
-                 type="multiple"  // multiple 모드 활성화 (여러 개 선택 가능)
-                 value={selectedTechStack}  // 선택된 값 배열을 value로 설정
-                 onValueChange={setSelectedTechStack}  // 값을 배열로 상태 업데이트
-                 variant="outline"
-               >
-                 <ToggleGroupItem value="react">React</ToggleGroupItem>
-                 <ToggleGroupItem value="java">Java</ToggleGroupItem>
-                 <ToggleGroupItem value="python">Python</ToggleGroupItem>
-                 <ToggleGroupItem value="typescript">TypeScript</ToggleGroupItem>
-               </ToggleGroup>
-             </DialogContent>
-           </Dialog>
-            )}
-
-            {isEditMode ? (
-              <>
-                <Button className="bg-green-500 text-white mt-4" onClick={handleSaveProfile}>
-                  Save Profile
-                </Button>
-                <Button className="bg-gray-500 text-white mt-2" onClick={() => setIsEditMode(false)}>
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <Button className="top-2 left-2 bg-blue-500 text-white" onClick={() => setIsEditMode(true)}>
-                Edit Profile
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="w-1/2">
-          <CardHeader>
-            <CardTitle>About Me</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isEditMode ? (
-              <Textarea
-                className="h-[230px]"
-                value={editedBio}
-                onChange={(e) => setEditedBio(e.target.value)}
-                placeholder="Please Introduce yourself to other Developers in DevMate!"
+<>
+<div className="p-8 w-full h-full">
+  <Card className="mb-8">
+    <CardHeader className="text-center">
+      <CardTitle className="text-5xl mb-6">Welcome back, {userInfo.username}!</CardTitle>
+      <CardDescription>This is your Developer Profile of DevMate.</CardDescription>
+      <CardContent>
+        <Button
+          className="w-[300px] h-[60px] text-xl font-semibold mr-6 mt-6 bg-blue-500 hover:bg-blue-600"
+          onClick={handlePost}
+        >
+          Create New Post
+        </Button>
+        <Button className="w-[300px] h-[60px] text-xl font-semibold mt-6 bg-green-500 hover:bg-green-600">
+          Search Posts
+        </Button>
+      </CardContent>
+    </CardHeader>
+  </Card>
+  <div className="flex">
+    <Card className="w-1/2">
+      <CardContent className="flex flex-col items-center">
+        <div
+          className="avatar rounded-full w-24 h-24 bg-cover bg-center mb-6"
+          style={{
+            backgroundImage: `url(${isEditMode ? editedAvatarPreview : userInfo.avatar_url})`,
+          }}
+          onClick={() => isEditMode && document.getElementById("avatarInput")?.click()}
+        >
+          {isEditMode && (
+            <>
+              <input
+                type="file"
+                id="avatarInput"
+                className="hidden"
+                accept="image/*"
+                onChange={handleAvatarChange}
               />
-            ) : (
-              <p>{userInfo.bio || "Introduce yourself here!"}</p>
-            )}
-          </CardContent>
-          <CardFooter>
-            {isEditMode ? (
-              <>
-                <Button className="bg-green-500 text-white" onClick={handleUpdateBio}>
-                  Save Bio
-                </Button>
-                <Button className="bg-gray-500 text-white" onClick={() => setIsEditMode(false)}>
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => setIsEditMode(true)}>Edit Bio</Button>
-            )}
-          </CardFooter>
-        </Card>
-      </div>
+              <div className=" bg-black bg-opacity-50 flex items-center justify-center text-white text-sm rounded-full">
+                Change Photo
+              </div>
+            </>
+          )}
+        </div>
+        <div className="text-lg font-semibold mb-4">{userInfo.username}</div>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {selectedTechStack.length > 0 ? (
+            selectedTechStack.map((tech) => (
+              <span key={tech} className="px-3 py-1 bg-blue-200 text-blue-800 rounded-lg">
+                {tech}
+              </span>
+            ))
+          ) : (
+            <p className="text-gray-500">No Tech Stack Selected</p>
+          )}
+        </div>
+
+        {isEditMode && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Select Your Tech Stack</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <ToggleGroup
+                type="multiple"
+                value={selectedTechStack}
+                onValueChange={setSelectedTechStack}
+                variant="outline"
+              >
+                <ToggleGroupItem value="react">React</ToggleGroupItem>
+                <ToggleGroupItem value="java">Java</ToggleGroupItem>
+                <ToggleGroupItem value="python">Python</ToggleGroupItem>
+                <ToggleGroupItem value="typescript">TypeScript</ToggleGroupItem>
+              </ToggleGroup>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* 프로필 수정 버튼 */}
+        {isEditMode ? (
+          <>
+            <Button className="bg-green-500 text-white mt-4" onClick={handleSaveProfile}>
+              Save Profile
+            </Button>
+            <Button className="bg-gray-500 text-white mt-2" onClick={() => setIsEditMode(false)}>
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button className="bg-blue-500 text-white" onClick={() => setIsEditMode(true)}>
+            Edit Profile
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+
+    {/* 자기소개 카드 */}
+    <Card className="w-1/2 ml-6">
+      <CardHeader>
+        <CardTitle>About Me</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isEditMode ? (
+          <Textarea
+            value={editedBio}
+            onChange={(e) => setEditedBio(e.target.value)}
+            placeholder="Please introduce yourself to other Developers in DevMate!"
+          />
+        ) : (
+          <p>{userInfo.bio || "Introduce yourself here!"}</p>
+        )}
+      </CardContent>
+      <CardFooter>
+        {isEditMode ? (
+          <>
+            <Button className="bg-green-500 text-white" onClick={handleUpdateBio}>
+              Save Bio
+            </Button>
+            <Button className="bg-gray-500 text-white" onClick={() => setIsEditMode(false)}>
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button onClick={() => setIsEditMode(true)}>Edit Bio</Button>
+        )}
+      </CardFooter>
+    </Card>
     </div>
-  );
+    </div> 
+</>
+
+ )  
 };
 
 export default Profile;

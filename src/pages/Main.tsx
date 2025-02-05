@@ -39,7 +39,7 @@ const Main = () => {
 
   return (
     <div className="relative w-full items-center justify-center">
-      <div className="flex flex-col justify-center items-center h-[50vh]">
+      <div className="flex flex-col justify-center items-center min-h-[50vh]">
         <h1 className="text-5xl text-center font-bold leading-tight mb-4">
           Welcome to <br />
           <span className="text-blue-500">Dev</span>Mate <br />

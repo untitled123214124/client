@@ -45,14 +45,15 @@ function ViewPost() {
   const navigate = useNavigate();
   const { id } = useUserStore();
   const [inputValue, setInputValue] = useState<string>('');
+  const [replyInputValue, setReplyInputValue] = useState(""); // 대댓글 입력 상태
   const [parentId, setParentId] = useState<string | null>(null);
   const [isReplyInputVisible, setIsReplyInputVisible] = useState<{ [key: string]: boolean }>({});
-  const [clickedCommentId, setClickedCommentId] = useState<string | null>(null);  // Track clicked comment
+  const [clickedCommentId, setClickedCommentId] = useState<string | null>(null);  
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState<string>('');
   const [editedContent, setEditedContent] = useState<string>('');
   const [liked, setLiked] = useState<boolean>(false);
-  const [likeCount, setLikecount] = useState<number>(0);
+  const [likeCount, setLikeCount] = useState<number>(0);
 
   useEffect(() => {
     if (!postId) {
@@ -61,15 +62,14 @@ function ViewPost() {
       return;
     }
 
-    // Fetch the post data
     axios
-      .get(`http://localhost:5000/boards/1/posts/${postId}`)
+      .get(`http://localhost:5000/boards/${boardId}/posts/${postId}`)
       .then(response => {
         if (response.data && response.data.post) {
           setPost(response.data.post);
           setEditedTitle(response.data.post.title);
           setEditedContent(response.data.post.content);
-          setLikecount(response.data.post.likeCount)
+          setLikeCount(response.data.post.likeCount);
         } else {
           throw new Error("Post not found");
         }
@@ -84,7 +84,7 @@ function ViewPost() {
       .get<{ success: boolean, comments: Comment[] }>(`http://localhost:5000/comments/${postId}`)
       .then(response => {
         if (response.data.success && response.data.comments) {
-          setComments(response.data.comments); // Update comments state
+          setComments(response.data.comments);
         } else {
           throw new Error("No comments found for this post");
         }
@@ -119,7 +119,6 @@ function ViewPost() {
   const handleDeletePost = async () => {
     try {
       const accessToken = localStorage.getItem("accessToken");
-
       if (!accessToken) {
         throw new Error("User is not authenticated.");
       }
@@ -137,25 +136,25 @@ function ViewPost() {
       );
 
       if (response.ok) {
-        alert("게시글이 성공적으로 삭제되었습니다.");
-        navigate("/boards/study/posts");
+        alert("Post deleted successfully.");
+        navigate(`/boards/${boardId}/posts`);
       } else {
-        alert("게시글 삭제에 실패했습니다.");
+        alert("Failed to delete post.");
       }
     } catch (err) {
-      console.error("게시글 삭제 중 오류 발생:", err);
-      alert("게시글 삭제에 실패했습니다.");
+      console.error("Error deleting post:", err);
+      alert("Failed to delete post.");
     }
   };
 
   const handleDeleteComment = async (commentId: string) => {
     try {
       const accessToken = localStorage.getItem("accessToken");
-  
+
       if (!accessToken) {
         throw new Error("User is not authenticated.");
       }
-  
+
       const response = await fetch(
         `http://localhost:5000/comments/${commentId}`,
         {
@@ -167,21 +166,58 @@ function ViewPost() {
           credentials: "include",
         }
       );
-  
+
       if (response.ok) {
-        alert("댓글이 성공적으로 삭제되었습니다.");
+        alert("Comment deleted successfully.");
         setComments((prevComments) =>
           prevComments.filter((comment) => comment._id !== commentId)
         );
       } else {
         const errorText = await response.text();
-        throw new Error(errorText || "댓글 삭제에 실패했습니다.");
+        throw new Error(errorText || "Failed to delete comment.");
       }
     } catch (err) {
-      console.error("댓글 삭제 중 오류 발생:", err);
-      alert("댓글 삭제에 실패했습니다.");
+      console.error("Error deleting comment:", err);
+      alert("Failed to delete comment.");
     }
-  };  
+  };
+
+  const handleLike = async () => {
+    if (!id || !post) return;
+
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("User is not authenticated.");
+      }
+
+      const response = await fetch(
+        `http://localhost:5000/boards/${boardId}/posts/like/${postId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({ userId: id }),
+        }
+      );
+
+      if (response.ok) {
+        setLiked(prevLiked => {
+          const newLikedState = !prevLiked;
+          setLikeCount(prevCount => newLikedState ? prevCount + 1 : prevCount - 1);
+          return newLikedState;
+        });
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to update the like status.");
+      }
+    } catch (error) {
+      setError(error.message || "An unexpected error occurred.");
+    }
+  };
 
   const handleCommentPost = async () => {
     const accessToken = localStorage.getItem("accessToken");
@@ -225,14 +261,14 @@ function ViewPost() {
       setComments((prevComments) => [...prevComments, data.comment]);
       setInputValue("");
       setParentId(null);
-      navigate(`/boards/${boardId}/${post}`)
+      navigate(`/boards/${boardId}/${postId}`);
     } catch (error) {
       setError(error.message || "An unexpected error occurred.");
     }
   };
 
   const handleEditPost = async () => {
-    let accessToken = localStorage.getItem("accessToken");
+    const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("User is not authenticated.");
     }
@@ -274,55 +310,20 @@ function ViewPost() {
     }
   };
 
-  const handleLike = async () => {
-    if (!id || !post) return;
-
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("User is not authenticated.");
-      }
-
-      const response = await fetch(
-        `http://localhost:5000/boards/${boardId}/posts/like/${postId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          credentials: "include",
-          body: JSON.stringify({ userId: id }),
-        }
-      );
-
-      if (response.ok) {
-        setLiked(prevLiked => {
-          const newLikedState = !prevLiked;
-          setLikecount(prevCount => newLikedState ? prevCount + 1 : prevCount - 1);
-          return newLikedState;
-        });
-      } else {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to update the like status.");
-      }
-    } catch (error) {
-      setError(error.message || "An unexpected error occurred.");
-    }
-  };
-
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditedTitle(post?.title || '');
     setEditedContent(post?.content || '');
   };
 
-  const handleClickComment = (commentId: string) => {
-    // Only allow showing the reply section for root comments
-    const comment = comments.find(comment => comment._id === commentId);
-    if (comment && !comment.parentId) {
-      setClickedCommentId(commentId);
+  const handleClickComment = (commentId: string, parentId: string | null) => {
+    const comment = comments.find((comment) => comment._id === commentId);
+    if (comment && parentId === null) {
+      setClickedCommentId((prevId) => (prevId === commentId ? null : commentId));
       setParentId(commentId);
+    } else if (parentId !== null) {
+      setClickedCommentId((prevId) => (prevId === commentId ? null : commentId));
+      setParentId(parentId);
     }
   };
 
@@ -357,7 +358,7 @@ function ViewPost() {
                 {isEditMode ? (
                   <>
                     <Button
-                      className="bg-green-500 text-white"
+                      className="bg-green-500 text-white ml-2"
                       onClick={handleEditPost}
                     >
                       Save
@@ -393,27 +394,31 @@ function ViewPost() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            {isEditMode ? (
-              <textarea
-                className="w-full h-40 border border-gray-300 p-2 rounded"
-                value={editedContent}
-                onChange={(e) => setEditedContent(e.target.value)}
-                placeholder="Enter the content"
-              />
-            ) : (
-              <p className="text-lg">{post.content}</p>
-            )}
-            <div className="place-self-center mt-64 w-[180px] h-[60px] flex justify-center items-center border border-gray-300 p-2 rounded-md gap-2">
-              Like This Post!
-              <Heart className={`cursor-pointer ${liked ? 'text-red-500' : 'text-gray-500'}`}
+          {isEditMode ? (
+            <textarea
+              className="w-full h-40 border border-gray-300 p-2 rounded"
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              placeholder="Enter the content"
+            />
+          ) : (
+            <p className="text-lg">{post.content}</p>
+          )}
+          <div className="place-self-center mt-64 w-[180px] h-[60px] flex justify-center items-center border border-gray-300 p-2 rounded-md gap-2">
+            Like This Post!
+            <Heart
+              className={`cursor-pointer ${liked ? 'text-red-500' : 'text-gray-500'}`}
               onClick={handleLike}
-              fill={liked ? 'red' : 'none'}/>
-              {likeCount}
-            </div>
-          </CardContent>
+              fill={liked ? 'red' : 'none'}
+            />
+            {likeCount}
+          </div>
+        </CardContent>
       </Card>
-      <div className="w-2/3 mx-auto justify-center items-center">
-        <h3 className=" justify-center items-center mx-auto text-xl font-bold mt-5">
+  
+      {/* 댓글 및 대댓글 처리 부분 */}
+      <div className="w-2/3 mx-auto justify-center items-center mt-5">
+        <h3 className="justify-center items-center mx-auto text-xl font-bold mt-5">
           Comments
         </h3>
         {comments.length > 0 ? (
@@ -421,23 +426,27 @@ function ViewPost() {
             {comments.map((comment) => (
               <div
                 key={comment._id}
-                className={`p-4 border border-gray-300 rounded-md mb-4 ${
-                  comment.parentId ? 'ml-8' : ''
-                }`}
+                className={`p-4 border border-gray-300 rounded-md mb-4 ${comment.parentId ? 'ml-8' : ''}`}
               >
                 <p className="font-semibold">User {comment.userId}</p>
                 <p className="text-sm text-gray-500">
                   {new Date(comment.createdAt).toLocaleString()}
                 </p>
                 <p
-                  onClick={() => handleClickComment(comment._id)}
+                  onClick={() => handleClickComment(comment._id, comment.parentId)}
                   className="cursor-pointer"
                 >
-                  {comment.parentId && "↳ "}
+                  {comment.parentId && '↳ '}
                   {comment.content}
                 </p>
                 {comment.userId === id && (
-                  <div className="mt-4">
+                  <div className="mt-4 mr-2">
+                    <Button
+                      className="bg-blue-500 text-white mr-2"
+                      onClick={() => handleEditComment(comment._id)}
+                    >
+                      Edit Comment
+                    </Button>
                     <Button
                       className="bg-red-500 text-white"
                       onClick={() => handleDeleteComment(comment._id)}
@@ -446,7 +455,8 @@ function ViewPost() {
                     </Button>
                   </div>
                 )}
-
+  
+                {/* 대댓글 작성 */}
                 {clickedCommentId === comment._id && !comment.parentId && (
                   <div className="mt-4">
                     <Input
@@ -455,34 +465,80 @@ function ViewPost() {
                       placeholder="Write a reply..."
                       className="w-full"
                     />
-                    <Button
-                      onClick={handleCommentPost}
-                      className="mt-4"
-                    >
+                    <Button onClick={handleCommentPost} className="mt-4">
                       Post Reply
                     </Button>
                   </div>
                 )}
+  
+                {/* 대댓글 표시 */}
+                {comments
+                  .filter((reply) => reply.parentId === comment._id)
+                  .map((reply) => (
+                    <div
+                      key={reply._id}
+                      className="ml-8 mt-4 p-4 border border-gray-300 rounded-md"
+                    >
+                      <p className="font-semibold">User {reply.userId}</p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(reply.createdAt).toLocaleString()}
+                      </p>
+                      <p>{reply.content}</p>
+                      {reply.userId === id && (
+                        <div className="mt-4 mr-2">
+                          <Button
+                            className="bg-blue-500 text-white"
+                            onClick={() => handleEditComment(reply._id)}
+                          >
+                            Edit Reply
+                          </Button>
+                          <Button
+                            className="bg-red-500 text-white"
+                            onClick={() => handleDeleteComment(reply._id)}
+                          >
+                            Delete Reply
+                          </Button>
+                        </div>
+                      )}
+  
+                      {/* 대댓글 작성 input */}
+                      {clickedCommentId === reply._id && (
+                        <div className="mt-4">
+                          <Input
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder="Write a reply..."
+                            className="w-full"
+                          />
+                          <Button onClick={handleCommentPost} className="mt-4">
+                            Post Reply
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
               </div>
             ))}
           </div>
         ) : (
-          <p className="w-[1200px] justify-center items-center mx-auto mt-5">
+          <p className="justify-center items-center mx-auto mt-5 mb-5">
             No comments yet.
           </p>
         )}
       </div>
+  
       <div className="flex w-2/3 mx-auto">
         <Input
           placeholder="Leave a comment!"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className="place-self-start mb-4"
+          className="mb-4"
         />
-        <Button className="ml-4"onClick={handleCommentPost}>Post</Button>
+        <Button className="ml-4" onClick={handleCommentPost}>
+          Post
+        </Button>
       </div>
     </div>
   );
 }
-
 export default ViewPost;
