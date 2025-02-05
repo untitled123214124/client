@@ -39,15 +39,13 @@ function ViewPost() {
   const { commentId } = useParams<{ commentId: string }>();
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [replies, setReplies] = useState<Comment[]>([]);
+  const [reply, setReplies] = useState<Comment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { id } = useUserStore();
   const [inputValue, setInputValue] = useState<string>('');
-  const [replyInputValue, setReplyInputValue] = useState(""); // 대댓글 입력 상태
   const [parentId, setParentId] = useState<string | null>(null);
-  const [isReplyInputVisible, setIsReplyInputVisible] = useState<{ [key: string]: boolean }>({});
   const [clickedCommentId, setClickedCommentId] = useState<string | null>(null);  
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState<string>('');
@@ -214,7 +212,7 @@ function ViewPost() {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to update the like status.");
       }
-    } catch (error) {
+    } catch (error: any) {
       setError(error.message || "An unexpected error occurred.");
     }
   };
@@ -262,7 +260,7 @@ function ViewPost() {
       setInputValue("");
       setParentId(null);
       navigate(`/boards/${boardId}/${postId}`);
-    } catch (error) {
+    } catch (error: any) {
       setError(error.message || "An unexpected error occurred.");
     }
   };
@@ -305,7 +303,7 @@ function ViewPost() {
       setPost(data.post);
       setIsEditMode(false);
       navigate(`/boards/${boardId}/${postId}`);
-    } catch (error) {
+    } catch (error: any) {
       setError(error.message || "An unexpected error occurred.");
     }
   };
@@ -316,15 +314,13 @@ function ViewPost() {
     setEditedContent(post?.content || '');
   };
 
-  const handleClickComment = (commentId: string, parentId: string | null) => {
-    const comment = comments.find((comment) => comment._id === commentId);
-    if (comment && parentId === null) {
-      setClickedCommentId((prevId) => (prevId === commentId ? null : commentId));
-      setParentId(commentId);
-    } else if (parentId !== null) {
-      setClickedCommentId((prevId) => (prevId === commentId ? null : commentId));
-      setParentId(parentId);
-    }
+  const handleClickComment = (commentId: string | null) => {
+    setClickedCommentId((prevId) => (prevId === commentId ? null : commentId));
+    setParentId(commentId);
+  };
+
+  const handleEditComment = () => {
+    // Code for editing comment (not implemented yet)
   };
 
   if (loading) {
@@ -416,7 +412,7 @@ function ViewPost() {
         </CardContent>
       </Card>
   
-      {/* 댓글 및 대댓글 처리 부분 */}
+      {/* 댓글 작성란 유지 */}
       <div className="w-2/3 mx-auto justify-center items-center mt-5">
         <h3 className="justify-center items-center mx-auto text-xl font-bold mt-5">
           Comments
@@ -433,7 +429,7 @@ function ViewPost() {
                   {new Date(comment.createdAt).toLocaleString()}
                 </p>
                 <p
-                  onClick={() => handleClickComment(comment._id, comment.parentId)}
+                  onClick={() => handleClickComment(comment._id)}
                   className="cursor-pointer"
                 >
                   {comment.parentId && '↳ '}
@@ -443,7 +439,7 @@ function ViewPost() {
                   <div className="mt-4 mr-2">
                     <Button
                       className="bg-blue-500 text-white mr-2"
-                      onClick={() => handleEditComment(comment._id)}
+                      onClick={() => handleEditComment()}
                     >
                       Edit Comment
                     </Button>
@@ -455,90 +451,44 @@ function ViewPost() {
                     </Button>
                   </div>
                 )}
-  
-                {/* 대댓글 작성 */}
-                {clickedCommentId === comment._id && !comment.parentId && (
-                  <div className="mt-4">
+                {clickedCommentId === comment._id && (
+                  <div className="flex mt-3 gap-2">
                     <Input
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       placeholder="Write a reply..."
                       className="w-full"
                     />
-                    <Button onClick={handleCommentPost} className="mt-4">
-                      Post Reply
+                    <Button
+                      onClick={handleCommentPost}
+                      className="bg-green-500 text-white"
+                    >
+                      Reply
                     </Button>
                   </div>
                 )}
-  
-                {/* 대댓글 표시 */}
-                {comments
-                  .filter((reply) => reply.parentId === comment._id)
-                  .map((reply) => (
-                    <div
-                      key={reply._id}
-                      className="ml-8 mt-4 p-4 border border-gray-300 rounded-md"
-                    >
-                      <p className="font-semibold">User {reply.userId}</p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(reply.createdAt).toLocaleString()}
-                      </p>
-                      <p>{reply.content}</p>
-                      {reply.userId === id && (
-                        <div className="mt-4 mr-2">
-                          <Button
-                            className="bg-blue-500 text-white"
-                            onClick={() => handleEditComment(reply._id)}
-                          >
-                            Edit Reply
-                          </Button>
-                          <Button
-                            className="bg-red-500 text-white"
-                            onClick={() => handleDeleteComment(reply._id)}
-                          >
-                            Delete Reply
-                          </Button>
-                        </div>
-                      )}
-  
-                      {/* 대댓글 작성 input */}
-                      {clickedCommentId === reply._id && (
-                        <div className="mt-4">
-                          <Input
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="Write a reply..."
-                            className="w-full"
-                          />
-                          <Button onClick={handleCommentPost} className="mt-4">
-                            Post Reply
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                {/* 대댓글이 있을 경우 */}
+                {reply.length > 0 && comment._id === parentId && (
+                  <div className="mt-4">
+                    {reply.map((re) => (
+                      <div
+                        key={re._id}
+                        className="ml-10 p-2 border border-gray-200 rounded-md"
+                      >
+                        <p>{re.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="justify-center items-center mx-auto mt-5 mb-5">
-            No comments yet.
-          </p>
+          <div>No comments yet.</div>
         )}
-      </div>
-  
-      <div className="flex w-2/3 mx-auto">
-        <Input
-          placeholder="Leave a comment!"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          className="mb-4"
-        />
-        <Button className="ml-4" onClick={handleCommentPost}>
-          Post
-        </Button>
       </div>
     </div>
   );
 }
+
 export default ViewPost;

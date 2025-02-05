@@ -33,14 +33,8 @@ const Profile = () => {
   }, [username, id, avatar_url, bio, userStatus]);
 
   const handleSaveProfile = () => {
-    setUser({ avatar_url: editedAvatarPreview, bio: editedBio });
+    setUser(userInfo.username, userInfo.id, editedAvatarPreview, editedBio, userInfo.userStatus);
     setIsEditMode(false);
-  };
-
-  const handleTechStackChange = (value: string) => {
-    setSelectedTechStack((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
-    );
   };
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,11 +81,11 @@ const Profile = () => {
       if (!result.user) throw new Error("서버 응답에 user 데이터가 없습니다.");
 
       localStorage.setItem("userInfo", JSON.stringify(result.user));
-      setUser(result.user);
+      setUser(result.user.username, result.user.id, result.user.avatar_url, result.user.bio, result.user.userStatus, );
 
       setIsEditMode(false);
       alert("바이오가 성공적으로 업데이트되었습니다.");
-    } catch (err) {
+    } catch (err: any) {
       console.error("바이오 업데이트 중 오류 발생:", err);
       alert(err.message || "바이오 업데이트에 실패했습니다.");
     }
