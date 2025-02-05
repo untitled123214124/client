@@ -1,11 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import {
-  Card,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -70,6 +65,12 @@ function Board() {
     }
   };
 
+  const boardNames: Record<string, string> = {
+    study: "스터디 모집",
+    toy: "토이 프로젝트",
+    code: "코드 리뷰",
+  };
+
   useEffect(() => {
     if (!boardId) {
       console.error("boardId is undefined!");
@@ -80,7 +81,7 @@ function Board() {
     console.log("Requesting posts for boardId:", boardId);
 
     axios
-      .get(`http://localhost:5000/boards/${boardId}/posts`, {
+      .get(`http://dev-mate.glitch.me/boards/${boardId}/posts`, {
         params: {
           currentPage: currentPage,
         },
@@ -114,13 +115,13 @@ function Board() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/">Main</BreadcrumbLink>
+              <BreadcrumbLink href="/">홈</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbPage>
                 <Link to={`/boards/${boardId}/posts`}>
-                  {boardId!.charAt(0).toUpperCase() + boardId!.slice(1)}
+                  {boardNames[boardId] || "알 수 없음"}
                 </Link>
               </BreadcrumbPage>
             </BreadcrumbItem>
@@ -139,16 +140,28 @@ function Board() {
               <CardHeader>
                 <CardTitle className="flex">
                   {post.title}
-                  <div className="text-[15px] text-gray-500 self-center ml-5">{post.username}</div>
+                  <div className="text-[15px] text-gray-500 self-center ml-5">
+                    {post.username}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardFooter className="mt-6 flex justify-between items-center gap-4">
-                <small>{new Date(post.createdAt).toLocaleString()}</small>
+                <small>
+                  게시일 : {new Date(post.createdAt).toLocaleString()}
+                </small>
                 <div className="flex items-center gap-1">
                   <Heart
-                    className={`w-3 h-3 ${post.likeCount ? 'fill-red-500 text-red-500' : 'text-black'}`}
+                    className={`w-3 h-3 ${
+                      post.likeCount
+                        ? "fill-red-500 text-red-500"
+                        : "text-black"
+                    }`}
                   />
-                  <small>{post.likeCount !== undefined && post.likeCount !== null ? post.likeCount : 0}</small>
+                  <small>
+                    {post.likeCount !== undefined && post.likeCount !== null
+                      ? post.likeCount
+                      : 0}
+                  </small>
                 </div>
               </CardFooter>
             </Card>
@@ -168,7 +181,11 @@ function Board() {
             <PaginationItem>
               <PaginationPrevious
                 onClick={currentPage === 1 ? undefined : handlePrevPage}
-                className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                className={
+                  currentPage === 1
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer"
+                }
               />
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, index) => (
@@ -183,8 +200,14 @@ function Board() {
             ))}
             <PaginationItem>
               <PaginationNext
-                onClick={currentPage === totalPages ? undefined : handleNextPage}
-                className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                onClick={
+                  currentPage === totalPages ? undefined : handleNextPage
+                }
+                className={
+                  currentPage === totalPages
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer"
+                }
               />
             </PaginationItem>
           </PaginationContent>

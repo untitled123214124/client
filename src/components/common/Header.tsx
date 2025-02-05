@@ -16,7 +16,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   const handleGitHubLogin = () => {
-    window.location.href = "http://localhost:5000/auth/github";
+    window.location.href = "http://dev-mate.glitch.me/auth/github";
   };
 
   const handleMain = () => {
@@ -36,19 +36,22 @@ const Header = () => {
 
   return (
     <div className="flex fixed border-b w-screen top-0 p-4 z-10 h-18 bg-white">
-      <h1 className="text-lg font-bold text-left mt-[7px] hover:cursor-pointer ml-3" onClick={handleMain}>
+      <h1
+        className="text-lg font-bold text-left mt-[7px] hover:cursor-pointer ml-3"
+        onClick={handleMain}
+      >
         <span className="text-blue-500">Dev</span>Mate
       </h1>
       <span className="text-black mt-2 ml-6">|</span>
       <div className="grow">
         <Button variant="link" onClick={() => handleBoardChange("study")}>
-          Study
+          스터디 모집
         </Button>
         <Button variant="link" onClick={() => handleBoardChange("toy")}>
-          Toy
+          토이 프로젝트
         </Button>
         <Button variant="link" onClick={() => handleBoardChange("code")}>
-          Code
+          코드 리뷰
         </Button>
       </div>
       <div className="place-self-end">
@@ -105,7 +108,7 @@ const Header = () => {
         )}
       </div>
     </div>
-  );  
+  );
 };
 
 export default Header;

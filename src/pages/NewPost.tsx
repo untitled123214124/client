@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
   SelectGroup,
-  SelectLabel
+  SelectLabel,
 } from "@/components/ui/select";
 
 function NewPost() {
@@ -57,61 +57,68 @@ function NewPost() {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return; 
-  
+    if (!validateForm()) return;
+
     setIsSaving(true);
     setError("");
-  
+
     try {
       const savedData = await editorRef.current!.save();
-  
+
       // 블록에서 텍스트만 추출
       const content = savedData.blocks
-        .filter(block => block.type === "paragraph")
-        .map(block => block.data.text)
+        .filter((block) => block.type === "paragraph")
+        .map((block) => block.data.text)
         .join("\n"); // 여러 개의 텍스트를 하나로 결합 (필요시 구분자 변경)
-  
+
       let accessToken = localStorage.getItem("accessToken");
-  
+
       if (!accessToken) {
         throw new Error("Access token is missing.");
       }
-  
+
       const requestOptions = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           title,
           content, // 여기에 필터링된 텍스트만 담긴 content가 들어갑니다.
         }),
       };
-  
-      let response = await fetch(`http://localhost:5000/boards/${boardId}/posts/`);
-  
+
+      let response = await fetch(
+        `http://dev-mate.glitch.me/boards/${boardId}/posts/`
+      );
+
       if (response.status === 401) {
-        const refreshResponse = await fetch("http://localhost:5000/auth/refresh-token", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: 'include',
-        });
-  
+        const refreshResponse = await fetch(
+          "http://dev-mate.glitch.me/auth/refresh-token",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }
+        );
+
         if (refreshResponse.ok) {
           const data = await refreshResponse.json();
           accessToken = data.accessToken;
-  
+
           requestOptions.headers["Authorization"] = `Bearer ${accessToken}`;
-          response = await fetch(`http://localhost:5000/boards/${boardId}/posts/`);
+          response = await fetch(
+            `http://dev-mate.glitch.me/boards/${boardId}/posts/`
+          );
         } else {
           throw new Error("Failed to refresh access token.");
         }
       }
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to save the post.");
@@ -120,7 +127,7 @@ function NewPost() {
       if (!boardId) {
         throw new Error("Board ID is required.");
       }
-  
+
       navigate(`/boards/${boardId}/posts`);
     } catch (error: any) {
       setError(error.message || "An unexpected error occurred.");
@@ -128,7 +135,6 @@ function NewPost() {
       setIsSaving(false);
     }
   };
-  
 
   return (
     <div className="flex flex-col justify-center items-center w-screen h-screen p-4">
@@ -148,9 +154,9 @@ function NewPost() {
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Categories</SelectLabel>
-                <SelectItem value="study">Study</SelectItem>
-                <SelectItem value="toy">Toy</SelectItem>
-                <SelectItem value="code">Code</SelectItem>
+                <SelectItem value="study">스터디 모집</SelectItem>
+                <SelectItem value="toy">토이 프로젝트</SelectItem>
+                <SelectItem value="code">코드 리뷰</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

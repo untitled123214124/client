@@ -10,7 +10,7 @@ const useAuth = () => {
     async (code: string) => {
       try {
         const response = await fetch(
-          `http://localhost:5000/auth/github/callback?code=${code}`
+          `http://dev-mate.glitch.me/auth/github/callback?code=${code}`
         );
 
         if (response.ok) {
