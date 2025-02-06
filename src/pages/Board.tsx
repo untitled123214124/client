@@ -81,7 +81,7 @@ function Board() {
     console.log("Requesting posts for boardId:", boardId);
 
     axios
-      .get(`http://localhost:5000/boards/${boardId}/posts?currentPage=1`, {
+      .get(`http://dev-mate.glitch.me/boards/${boardId}/posts?currentPage=1`, {
       })
       .then((response) => {
         if (
