@@ -121,7 +121,7 @@ function Board() {
             <BreadcrumbItem>
               <BreadcrumbPage>
                 <Link to={`/boards/${boardId}/posts`}>
-                  {boardNames[boardId] || "알 수 없음"}
+                  {boardId? boardNames[boardId] || "알 수 없음" : "알 수 없음"}
                 </Link>
               </BreadcrumbPage>
             </BreadcrumbItem>
