@@ -29,30 +29,20 @@ function NewPost() {
     editorRef.current = editor;
 
     return () => {
-      if (editorRef.current) {
-        editorRef.current.isReady
-          .then(() => {
-            editorRef.current?.destroy();
-            editorRef.current = null;
-          })
-          .catch((error) => console.error("Editor cleanup error:", error));
-      }
+      editorRef.current?.isReady
+        .then(() => {
+          editorRef.current?.destroy();
+          editorRef.current = null;
+        })
+        .catch(console.error);
     };
   }, []);
 
   const validateForm = () => {
-    if (!title.trim()) {
-      setError("Title cannot be empty.");
-      return false;
-    }
-    if (!boardId) {
-      setError("Board ID is required.");
-      return false;
-    }
-    if (!editorRef.current) {
-      setError("Editor is not ready.");
-      return false;
-    }
+    if (!title.trim()) return setError("Title cannot be empty."), false;
+    if (!boardId) return setError("Board ID is required."), false;
+    if (!editorRef.current) return setError("Editor is not ready."), false;
+    setError("");
     return true;
   };
 
@@ -60,77 +50,35 @@ function NewPost() {
     if (!validateForm()) return;
 
     setIsSaving(true);
-    setError("");
-
     try {
-      const savedData = await editorRef.current!.save();
-
-      // 블록에서 텍스트만 추출
-      const content = savedData.blocks
+      const savedData = await editorRef.current?.save();
+      const content = savedData?.blocks
         .filter((block) => block.type === "paragraph")
         .map((block) => block.data.text)
-        .join("\n"); // 여러 개의 텍스트를 하나로 결합 (필요시 구분자 변경)
+        .join("\n") || "";
 
-      let accessToken = localStorage.getItem("accessToken");
+      if (!boardId) throw new Error("Board ID is required.");
 
-      if (!accessToken) {
-        throw new Error("Access token is missing.");
-      }
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) throw new Error("Access token is missing.");
 
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          title,
-          content, // 여기에 필터링된 텍스트만 담긴 content가 들어갑니다.
-        }),
-      };
-
-      let response = await fetch(
-        `http://dev-mate.glitch.me/boards/${boardId}/posts/`
+      const response = await fetch(
+        `http://dev-mate.glitch.me/boards/${boardId}/posts/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({ title, content }),
+        }
       );
 
-      if (response.status === 401) {
-        const refreshResponse = await fetch(
-          "http://dev-mate.glitch.me/auth/refresh-token",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          }
-        );
-
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json();
-          accessToken = data.accessToken;
-
-          requestOptions.headers["Authorization"] = `Bearer ${accessToken}`;
-          response = await fetch(
-            `http://dev-mate.glitch.me/boards/${boardId}/posts/`
-          );
-        } else {
-          throw new Error("Failed to refresh access token.");
-        }
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to save the post.");
-      }
-
-      if (!boardId) {
-        throw new Error("Board ID is required.");
-      }
-
+      if (!response.ok) throw new Error(await response.text() || "Failed to save the post.");
       navigate(`/boards/${boardId}/posts`);
-    } catch (error: any) {
-      setError(error.message || "An unexpected error occurred.");
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setIsSaving(false);
     }
@@ -146,30 +94,24 @@ function NewPost() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-        <div>
-          <Select onValueChange={(value) => setBoardId(value)}>
-            <SelectTrigger className="mb-4">
-              <SelectValue placeholder="Select a board category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Categories</SelectLabel>
-                <SelectItem value="study">스터디 모집</SelectItem>
-                <SelectItem value="toy">토이 프로젝트</SelectItem>
-                <SelectItem value="code">코드 리뷰</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select onValueChange={setBoardId}>
+          <SelectTrigger className="mb-4">
+            <SelectValue placeholder="Select a board category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Categories</SelectLabel>
+              <SelectItem value="study">스터디 모집</SelectItem>
+              <SelectItem value="toy">토이 프로젝트</SelectItem>
+              <SelectItem value="code">코드 리뷰</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
         <div id="editor" className="border border-gray-300 rounded p-4"></div>
-
         {error && <p className="text-red-500 mt-2">{error}</p>}
-
         <button
           onClick={handleSave}
-          className={`mt-4 px-4 py-2 text-white rounded ${
-            isSaving ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
-          }`}
+          className={`mt-4 px-4 py-2 text-white rounded ${isSaving ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"}`}
           disabled={isSaving}
         >
           {isSaving ? "Saving..." : "Save"}
