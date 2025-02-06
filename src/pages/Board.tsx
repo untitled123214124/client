@@ -81,7 +81,10 @@ function Board() {
     console.log("Requesting posts for boardId:", boardId);
 
     axios
-      .get(`http://dev-mate.glitch.me/boards/${boardId}/posts?currentPage=1`, {
+      .get(`http://dev-mate.glitch.me/boards/${boardId}/posts`, {
+        params: {
+          currentPage: currentPage,
+        },
       })
       .then((response) => {
         if (
