@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import useUserStore from '@/stores/userStore';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import useUserStore from "@/stores/userStore";
 import {
   Card,
   CardContent,
@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from '@/components/ui/input';
-import { Heart } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Heart } from "lucide-react";
 
 interface Post {
   _id: string;
@@ -44,12 +44,12 @@ function ViewPost() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { id } = useUserStore();
-  const [inputValue, setInputValue] = useState<string>('');
+  const [inputValue, setInputValue] = useState<string>("");
   const [parentId, setParentId] = useState<string | null>(null);
-  const [clickedCommentId, setClickedCommentId] = useState<string | null>(null);  
+  const [clickedCommentId, setClickedCommentId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editedTitle, setEditedTitle] = useState<string>('');
-  const [editedContent, setEditedContent] = useState<string>('');
+  const [editedTitle, setEditedTitle] = useState<string>("");
+  const [editedContent, setEditedContent] = useState<string>("");
   const [liked, setLiked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);
 
@@ -61,8 +61,8 @@ function ViewPost() {
     }
 
     axios
-      .get(`http://localhost:5000/boards/${boardId}/posts/${postId}`)
-      .then(response => {
+      .get(`http://dev-mate.glitch.me/boards/${boardId}/posts/${postId}`)
+      .then((response) => {
         if (response.data && response.data.post) {
           setPost(response.data.post);
           setEditedTitle(response.data.post.title);
@@ -72,22 +72,24 @@ function ViewPost() {
           throw new Error("Post not found");
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Error fetching post:", err);
         setError(err.message || "Failed to load the post");
       });
 
     // Fetch the comments data
     axios
-      .get<{ success: boolean, comments: Comment[] }>(`http://localhost:5000/comments/${postId}`)
-      .then(response => {
+      .get<{ success: boolean; comments: Comment[] }>(
+        `http://dev-mate.glitch.me/comments/${postId}`
+      )
+      .then((response) => {
         if (response.data.success && response.data.comments) {
           setComments(response.data.comments);
         } else {
           throw new Error("No comments found for this post");
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Error fetching comments:", err);
         setError(err.message || "Failed to load comments");
       })
@@ -99,15 +101,15 @@ function ViewPost() {
   useEffect(() => {
     if (commentId) {
       axios
-        .get<Reply>(`http://localhost:5000/comments/${commentId}`)
-        .then(response => {
+        .get<Reply>(`http://dev-mate.glitch.me/comments/${commentId}`)
+        .then((response) => {
           if (response.data.success) {
             setReplies(response.data.comments);
           } else {
             throw new Error("No replies found for this comment");
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.error("Error fetching replies:", err);
           setError(err.message || "Failed to load replies");
         });
@@ -122,7 +124,7 @@ function ViewPost() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/boards/${boardId}/posts/${postId}`,
+        `http://dev-mate.glitch.me/boards/${boardId}/posts/${postId}`,
         {
           method: "DELETE",
           headers: {
@@ -154,7 +156,7 @@ function ViewPost() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/comments/${commentId}`,
+        `http://dev-mate.glitch.me/comments/${commentId}`,
         {
           method: "DELETE",
           headers: {
@@ -190,7 +192,7 @@ function ViewPost() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/boards/${boardId}/posts/like/${postId}`,
+        `http://dev-mate.glitch.me/boards/${boardId}/posts/like/${postId}`,
         {
           method: "POST",
           headers: {
@@ -203,9 +205,11 @@ function ViewPost() {
       );
 
       if (response.ok) {
-        setLiked(prevLiked => {
+        setLiked((prevLiked) => {
           const newLikedState = !prevLiked;
-          setLikeCount(prevCount => newLikedState ? prevCount + 1 : prevCount - 1);
+          setLikeCount((prevCount) =>
+            newLikedState ? prevCount + 1 : prevCount - 1
+          );
           return newLikedState;
         });
       } else {
@@ -237,18 +241,15 @@ function ViewPost() {
     };
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/comments/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          credentials: "include",
-          body: JSON.stringify(commentData),
-        }
-      );
+      const response = await fetch("http://dev-mate.glitch.me/comments/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        credentials: "include",
+        body: JSON.stringify(commentData),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -282,7 +283,7 @@ function ViewPost() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/boards/${boardId}/posts/${postId}`,
+        `http://dev-mate.glitch.me/boards/${boardId}/posts/${postId}`,
         {
           method: "PUT",
           headers: {
@@ -310,8 +311,8 @@ function ViewPost() {
 
   const handleCancelEdit = () => {
     setIsEditMode(false);
-    setEditedTitle(post?.title || '');
-    setEditedContent(post?.content || '');
+    setEditedTitle(post?.title || "");
+    setEditedContent(post?.content || "");
   };
 
   const handleClickComment = (commentId: string | null) => {
@@ -403,15 +404,17 @@ function ViewPost() {
           <div className="place-self-center mt-64 w-[180px] h-[60px] flex justify-center items-center border border-gray-300 p-2 rounded-md gap-2">
             Like This Post!
             <Heart
-              className={`cursor-pointer ${liked ? 'text-red-500' : 'text-gray-500'}`}
+              className={`cursor-pointer ${
+                liked ? "text-red-500" : "text-gray-500"
+              }`}
               onClick={handleLike}
-              fill={liked ? 'red' : 'none'}
+              fill={liked ? "red" : "none"}
             />
             {likeCount}
           </div>
         </CardContent>
       </Card>
-  
+
       {/* 댓글 작성란 유지 */}
       <div className="w-2/3 mx-auto justify-center items-center mt-5">
         <h3 className="justify-center items-center mx-auto text-xl font-bold mt-5">
@@ -422,7 +425,9 @@ function ViewPost() {
             {comments.map((comment) => (
               <div
                 key={comment._id}
-                className={`p-4 border border-gray-300 rounded-md mb-4 ${comment.parentId ? 'ml-8' : ''}`}
+                className={`p-4 border border-gray-300 rounded-md mb-4 ${
+                  comment.parentId ? "ml-8" : ""
+                }`}
               >
                 <p className="font-semibold">User {comment.userId}</p>
                 <p className="text-sm text-gray-500">
@@ -432,7 +437,7 @@ function ViewPost() {
                   onClick={() => handleClickComment(comment._id)}
                   className="cursor-pointer"
                 >
-                  {comment.parentId && '↳ '}
+                  {comment.parentId && "↳ "}
                   {comment.content}
                 </p>
                 {comment.userId === id && (
