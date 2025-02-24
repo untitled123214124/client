@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { UserStore } from '@/models/userstore.model';
+import { UserStore } from '@/types/userstore.type';
 
 const useUserStore = create<UserStore>((set) => ({
   username: '',

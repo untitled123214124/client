@@ -17,11 +17,11 @@ const Main = () => {
   const navigate = useNavigate();
 
   const handleGitHubLogin = () => {
-    window.location.href = "http://dev-mate.glitch.me/auth/github";
+    window.location.href = "http://localhost:5000/auth/github";
   };
 
   const handleBoard = () => {
-    navigate(`/boards/`);
+    navigate(`/boards`);
   };
 
   const boardImages: Record<BoardId, string> = {
@@ -37,7 +37,6 @@ const Main = () => {
     code: "Share your coding projects and get feedback from peers in the community.",
   };
 
-  // boardId는 BoardId 타입으로 지정하여 타입 안정성 확보
   const handleCardClick = (boardId: BoardId) => {
     navigate(`/boards/${boardId}/posts`);
   };

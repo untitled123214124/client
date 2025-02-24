@@ -1,6 +1,6 @@
 import Header from "./Header"
 import Footer from "./Footer"
-import { LayoutProps } from "@/models/layout.model"
+import { LayoutProps } from "@/types/layout.type"
 
 const Layout = ({children}: LayoutProps) => {
   return (

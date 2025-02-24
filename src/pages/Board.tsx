@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,21 +19,13 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Heart } from "lucide-react";
+import { Post } from "@/types/post.type";
+import { getPosts } from "@/api/posts";
 
-interface Post {
-  _id: string;
-  boardId: string;
-  username: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  likeCount: number;
-}
 
 function Board() {
   const { boardId } = useParams<{ boardId: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const postsPerPage = 6;
@@ -73,44 +64,21 @@ function Board() {
 
   useEffect(() => {
     if (!boardId) {
-      console.error("boardId is undefined!");
-      setError("Board ID is missing or invalid.");
+      console.log("Board ID is missing or invalid.");
       return;
     }
 
-    console.log("Requesting posts for boardId:", boardId);
-
-    axios
-      .get(`http://dev-mate.glitch.me/boards/${boardId}/posts`, {
-        params: {
-          currentPage: currentPage,
-        },
+    getPosts(boardId, currentPage)
+      .then(({ posts, total }) => {
+        setPosts(posts);
+        setTotalPosts(total);
       })
-      .then((response) => {
-        if (
-          response.data &&
-          Array.isArray(response.data.posts) &&
-          typeof response.data.total === "number"
-        ) {
-          console.log(response.data);
-          setPosts(response.data.posts);
-          setTotalPosts(response.data.total);
-        } else {
-          throw new Error("Invalid response format");
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching posts:", error);
-        setError(error.message);
-      });
+      .catch((error) => error(error.message));
   }, [boardId, currentPage]);
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
 
   return (
     <div className="pt-8">
+      
       <div className="ml-12">
         <Breadcrumb>
           <BreadcrumbList>

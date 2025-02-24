@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import useAuth from "@/hooks/useAuth";
 import { useSearchParams } from "react-router-dom";
+import useAuth from "@/hooks/useAuth"; 
 
 const LoginCallback = () => {
   const [searchParams] = useSearchParams();
@@ -19,3 +19,4 @@ const LoginCallback = () => {
 };
 
 export default LoginCallback;
+

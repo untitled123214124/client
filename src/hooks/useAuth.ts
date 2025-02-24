@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "@/stores/userStore";
+import { loginWithGithub } from "@/api/auth";
 
 const useAuth = () => {
   const navigate = useNavigate();
@@ -9,34 +10,17 @@ const useAuth = () => {
   const handleLogin = useCallback(
     async (code: string) => {
       try {
-        const response = await fetch(
-          `http://dev-mate.glitch.me/auth/github/callback?code=${code}`
-        );
+        const { token, user } = await loginWithGithub(code);
 
-        if (response.ok) {
-          const data = await response.json();
+        localStorage.setItem("accessToken", token.accessToken);
+        localStorage.setItem("userInfo", JSON.stringify(user));
 
-          localStorage.setItem("accessToken", data.token.accessToken);
-          localStorage.setItem("userInfo", JSON.stringify(data.user));
+        setUser(user.username, user.id, user.avatar_url, user.bio, "SIGNED_IN");
 
-          const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-
-          setUser(
-            userInfo.username,
-            userInfo.id,
-            userInfo.avatar_url,
-            userInfo.bio,
-            "SIGNED_IN"
-          );
-
-          navigate("/boards/study/posts");
-        } else {
-          console.error("Login callback failed:", await response.text());
-          alert("로그인 실패");
-        }
+        navigate("/boards/study/posts");
       } catch (error) {
-        console.error("Error during login callback:", error);
-        alert("로그인 중 에러가 발생했습니다.");
+        console.error("로그인 오류:", error);
+        alert("로그인 중 문제가 발생했습니다.");
       }
     },
     [navigate, setUser]

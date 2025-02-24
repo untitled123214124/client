@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import EditorJS from "@editorjs/editorjs";
 import { useNavigate } from "react-router-dom";
+import { savePost } from "@/api/posts";
 import {
   Select,
   SelectContent,
@@ -38,44 +39,19 @@ function NewPost() {
     };
   }, []);
 
-  const validateForm = () => {
-    if (!title.trim()) return setError("Title cannot be empty."), false;
-    if (!boardId) return setError("Board ID is required."), false;
-    if (!editorRef.current) return setError("Editor is not ready."), false;
-    setError("");
-    return true;
-  };
-
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!editorRef.current) return setError("Editor is not ready.");
 
     setIsSaving(true);
     try {
-      const savedData = await editorRef.current?.save();
-      const content = savedData?.blocks
-        .filter((block) => block.type === "paragraph")
-        .map((block) => block.data.text)
-        .join("\n") || "";
+      const savedData = await editorRef.current.save();
+      const content =
+        savedData?.blocks
+          .filter((block) => block.type === "paragraph")
+          .map((block) => block.data.text)
+          .join("\n") || "";
 
-      if (!boardId) throw new Error("Board ID is required.");
-
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) throw new Error("Access token is missing.");
-
-      const response = await fetch(
-        `http://dev-mate.glitch.me/boards/${boardId}/posts/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          credentials: "include",
-          body: JSON.stringify({ title, content }),
-        }
-      );
-
-      if (!response.ok) throw new Error(await response.text() || "Failed to save the post.");
+      await savePost(boardId!, title, content);
       navigate(`/boards/${boardId}/posts`);
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -111,7 +87,9 @@ function NewPost() {
         {error && <p className="text-red-500 mt-2">{error}</p>}
         <button
           onClick={handleSave}
-          className={`mt-4 px-4 py-2 text-white rounded ${isSaving ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"}`}
+          className={`mt-4 px-4 py-2 text-white rounded ${
+            isSaving ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
+          }`}
           disabled={isSaving}
         >
           {isSaving ? "Saving..." : "Save"}

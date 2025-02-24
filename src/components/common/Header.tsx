@@ -16,7 +16,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   const handleGitHubLogin = () => {
-    window.location.href = "http://dev-mate.glitch.me/auth/github";
+    window.location.href = "http://localhost:5000/auth/github";
   };
 
   const handleMain = () => {

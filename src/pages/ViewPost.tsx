@@ -12,27 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Heart } from "lucide-react";
-
-interface Post {
-  _id: string;
-  userId: string;
-  title: string;
-  content: string;
-  createdAt: string;
-}
-
-interface Comment {
-  _id: string;
-  userId: string;
-  content: string;
-  createdAt: string;
-  parentId?: string | null;
-}
-
-interface Reply {
-  success: boolean;
-  comments: Comment[];
-}
+import { getPost, deletePost } from "@/api/posts";
+import { Post, Comment, Reply } from "@/types/post.type";
 
 function ViewPost() {
   const { boardId, postId } = useParams<{ boardId: string; postId: string }>();
@@ -60,24 +41,8 @@ function ViewPost() {
       return;
     }
 
-    axios
-      .get(`http://dev-mate.glitch.me/boards/${boardId}/posts/${postId}`)
-      .then((response) => {
-        if (response.data && response.data.post) {
-          setPost(response.data.post);
-          setEditedTitle(response.data.post.title);
-          setEditedContent(response.data.post.content);
-          setLikeCount(response.data.post.likeCount);
-        } else {
-          throw new Error("Post not found");
-        }
-      })
-      .catch((err) => {
-        console.error("Error fetching post:", err);
-        setError(err.message || "Failed to load the post");
-      });
+    
 
-    // Fetch the comments data
     axios
       .get<{ success: boolean; comments: Comment[] }>(
         `http://dev-mate.glitch.me/comments/${postId}`
@@ -117,68 +82,17 @@ function ViewPost() {
   }, [commentId]);
 
   const handleDeletePost = async () => {
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("User is not authenticated.");
-      }
-
-      const response = await fetch(
-        `http://dev-mate.glitch.me/boards/${boardId}/posts/${postId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          credentials: "include",
-        }
-      );
-
-      if (response.ok) {
-        alert("Post deleted successfully.");
-        navigate(`/boards/${boardId}/posts`);
-      } else {
-        alert("Failed to delete post.");
-      }
-    } catch (err) {
-      console.error("Error deleting post:", err);
-      alert("Failed to delete post.");
-    }
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-
-      if (!accessToken) {
-        throw new Error("User is not authenticated.");
-      }
-
-      const response = await fetch(
-        `http://dev-mate.glitch.me/comments/${commentId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          credentials: "include",
-        }
-      );
-
-      if (response.ok) {
-        alert("Comment deleted successfully.");
-        setComments((prevComments) =>
-          prevComments.filter((comment) => comment._id !== commentId)
-        );
-      } else {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to delete comment.");
-      }
-    } catch (err) {
-      console.error("Error deleting comment:", err);
-      alert("Failed to delete comment.");
+    if (!boardId || !postId) return;
+  
+    const confirmed = window.confirm("Are you sure you want to delete this post?");
+    if (!confirmed) return;
+  
+    const success = await deletePost(boardId, postId);
+    if (success) {
+      alert("Post deleted successfully.");
+      navigate(`/boards/${boardId}`);
+    } else {
+      alert("Failed to delete the post.");
     }
   };
 
