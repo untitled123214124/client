@@ -20,16 +20,19 @@ import {
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { Post } from "@/types/post.type";
-import { getPosts } from "@/api/posts";
+import { usePost } from "@/hooks/usePost";
 
-
-function Board() {
+export default function Board() {
   const { boardId } = useParams<{ boardId: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const postsPerPage = 6;
   const totalPages = Math.ceil(totalPosts / postsPerPage);
+
   const navigate = useNavigate();
 
   const handlePost = () => {
@@ -63,22 +66,33 @@ function Board() {
   };
 
   useEffect(() => {
-    if (!boardId) {
-      console.log("Board ID is missing or invalid.");
-      return;
-    }
+    const fetchPosts = async () => {
+      if (!boardId) return;
 
-    getPosts(boardId, currentPage)
-      .then(({ posts, total }) => {
-        setPosts(posts);
-        setTotalPosts(total);
-      })
-      .catch((error) => error(error.message));
-  }, [boardId, currentPage]);
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await HandleGetPosts(boardId, currentPage);
+        console.log(response)
+        setPosts(response.posts);
+        setTotalPosts(response.total);
+      } catch (err: any) {
+        console.error("Failed to load posts:", err);
+        setError("Failed to load posts");
+      } finally {
+        setLoading(false);  
+      }
+    };
+
+    fetchPosts();
+  }, [boardId, currentPage]);  
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className="pt-8">
-      
       <div className="ml-12">
         <Breadcrumb>
           <BreadcrumbList>
@@ -89,7 +103,7 @@ function Board() {
             <BreadcrumbItem>
               <BreadcrumbPage>
                 <Link to={`/boards/${boardId}/posts`}>
-                  {boardId? boardNames[boardId] || "알 수 없음" : "알 수 없음"}
+                  {boardId ? boardNames[boardId] || "알 수 없음" : "알 수 없음"}
                 </Link>
               </BreadcrumbPage>
             </BreadcrumbItem>
@@ -183,6 +197,4 @@ function Board() {
       </div>
     </div>
   );
-}
-
-export default Board;
+};

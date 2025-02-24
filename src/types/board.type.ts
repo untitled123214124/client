@@ -1,0 +1,1 @@
+export type BoardId = "study" | "toy" | "code";

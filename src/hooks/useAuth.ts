@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "@/stores/userStore";
-import { loginWithGithub } from "@/api/auth";
+import { login } from "@/api/auth";
 
 const useAuth = () => {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ const useAuth = () => {
   const handleLogin = useCallback(
     async (code: string) => {
       try {
-        const { token, user } = await loginWithGithub(code);
+        const { token, user } = await login(code);
 
         localStorage.setItem("accessToken", token.accessToken);
         localStorage.setItem("userInfo", JSON.stringify(user));

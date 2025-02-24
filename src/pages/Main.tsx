@@ -9,9 +9,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-
-// boardId에 사용할 수 있는 값을 명확히 지정
-type BoardId = "study" | "toy" | "code";
+import { BoardId } from "@/types/board.type";
 
 const Main = () => {
   const navigate = useNavigate();

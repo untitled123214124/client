@@ -1,51 +1,17 @@
 import axios from "axios";
-import { Post } from "@/types/post.type";
 
 export const getPosts = async (boardId: string, currentPage: number) => {
-  try {
-    const response = await axios.get(`http://localhost:5000/boards/${boardId}/posts`, {
-      params: { currentPage },
-    });
-
-    if (
-      response.data &&
-      Array.isArray(response.data.posts) &&
-      typeof response.data.total === "number"
-    ) {
-      return {
-        posts: response.data.posts as Post[],
-        total: response.data.total as number,
-      };
-    } else {
-      throw new Error("Invalid response format");
-    }
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    throw error;
-  }
+  const response = await axios.get(`http://localhost:5000/boards/${boardId}/posts`, {
+    params: { currentPage },
+  });
+  return response.data;   
 };
 
 export const getPost = async (boardId: string, postId: string) => {
-  try {
-    const response = await axios.get(
-      `http://localhost:5000/boards/${boardId}/posts/${postId}`
-    );
-    
-    if (response.data && response.data.post) {
-      return {
-        success: true,
-        post: response.data.post,
-      };
-    } else {
-      throw new Error("Post not found");
-    }
-  } catch (error: any) {
-    console.error("Error fetching post:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to load the post",
-    };
-  }
+  const response = await axios.get(
+    `http://localhost:5000/boards/${boardId}/posts/${postId}`
+  );
+  return response.data;
 };
 
 export const savePost = async (boardId: string, title: string, content: string) => {
@@ -67,18 +33,41 @@ export const savePost = async (boardId: string, title: string, content: string) 
       withCredentials: true,
     }
   );
-
   return response.data;
+};
+
+export const editPost = async (
+  postId: string,
+  title: string,
+  content: string
+) => {
+  const accessToken = localStorage.getItem("accessToken");
+
+  if (!accessToken) throw new Error("Access token is missing.");
+
+  try {
+    const response = await axios.put(
+      `http://localhost:5000/posts/${postId}`,
+      { title, content },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing post:", error);
+    throw error; 
+  }
 };
 
 export const deletePost = async (boardId: string, postId: string) => {
   const accessToken = localStorage.getItem("accessToken");
+  if (!accessToken) throw new Error("Access token is missing.");
 
   try {
-    if (!accessToken) {
-      throw new Error("User is not authenticated.");
-    }
-
     const response = await axios.delete(
       `http://localhost:5000/boards/${boardId}/posts/${postId}`,
       {
@@ -91,12 +80,10 @@ export const deletePost = async (boardId: string, postId: string) => {
 
     if (response.status === 200) {
       return true;
-    } else {
-      throw new Error("Failed to delete post.");
     }
+    throw new Error("Failed to delete post.");
   } catch (err) {
     console.error("Error deleting post:", err);
-    alert("Failed to delete post.");
-    return false;
+    throw err;
   }
 };
