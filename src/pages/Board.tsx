@@ -24,13 +24,14 @@ import { usePost } from "@/hooks/usePost";
 
 export default function Board() {
   const { boardId } = useParams<{ boardId: string }>();
+  const { HandleGetPosts } = usePost();
   const [posts, setPosts] = useState<Post[]>([]);
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const postsPerPage = 6;
+  const postsPerPage = 6; 
   const totalPages = Math.ceil(totalPosts / postsPerPage);
 
   const navigate = useNavigate();
@@ -74,7 +75,6 @@ export default function Board() {
 
       try {
         const response = await HandleGetPosts(boardId, currentPage);
-        console.log(response)
         setPosts(response.posts);
         setTotalPosts(response.total);
       } catch (err: any) {
@@ -86,7 +86,7 @@ export default function Board() {
     };
 
     fetchPosts();
-  }, [boardId, currentPage]);  
+  }, [boardId, currentPage, HandleGetPosts]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;

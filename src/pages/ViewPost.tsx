@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Heart } from "lucide-react";
 import { Post, Comment } from "@/types/post.type";
-import { HandleGetPost, HandleDeletePost, HandleLike } from "@/hooks/usePost";
+import { usePost } from "@/hooks/usePost";
 import { HandleGetComments } from "@/hooks/useComment";
 
 function ViewPost() {
   const { boardId, postId } = useParams<{ boardId: string; postId: string }>();
   const navigate = useNavigate();
   const { id } = useUserStore();
+  const { HandleGetPost, HandleEditPost, HandleDeletePost } = usePost();
   
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -63,6 +64,8 @@ function ViewPost() {
   const handleLike = () => {
     if (!boardId || !postId) return;
     HandleLike(boardId, postId);
+    setLiked(!liked);
+    setLikeCount(prev => (liked ? prev - 1 : prev + 1));  // Toggle like count
   };
 
   const handleDeletePost = () => {
