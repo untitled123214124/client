@@ -1,29 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Post } from "@/types/post.type";
 import { getPosts, getPost, editPost, deletePost } from "@/api/posts";
 
-export const usePost = () => {
-  const [loading, setLoading] = useState(false);  // 로딩 상태
-  const [error, setError] = useState<string | null>(null);  // 에러 상태
+export const usePost = (boardId: string) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const HandleGetPosts = async (boardId: string, currentPage: number) => {
+  const HandleGetPosts = async (boardId: string, currentPage: number = 1) => {
     if (!boardId) return { posts: [], total: 0 };
 
     try {
       setLoading(true);
+      setError(null);
       const response = await getPosts(boardId, currentPage);
       if (response) {
-        return response;
+        setPosts(response.posts);
+        setTotalPosts(response.total);
       } else {
         throw new Error("Invalid response format or missing posts/total");
       }
     } catch (error: any) {
       console.error("Error fetching posts:", error);
       setError(error.message || "Failed to load posts");
-      throw error;
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    HandleGetPosts(boardId, currentPage);
+  }, [boardId, currentPage]);
 
   const HandleGetPost = async (boardId: string, postId: string) => {
     if (!boardId || !postId) return;
@@ -31,15 +40,11 @@ export const usePost = () => {
     try {
       setLoading(true);
       const response = await getPost(boardId, postId);
-      if (response) {
-        return response;
-      } else {
-        throw new Error("Invalid response format or missing boardId/postId");
-      }
+      return response;
+      console.log(response)
     } catch (error: any) {
       console.error("Error fetching post:", error);
       setError(error.message || "Failed to load the post");
-      throw error;
     } finally {
       setLoading(false);
     }
@@ -53,18 +58,16 @@ export const usePost = () => {
 
     try {
       setLoading(true);
-      const updatedPost = await editPost(postId, title, content);
-      return updatedPost;
+      return await editPost(postId, title, content);
     } catch (error: any) {
       console.error("Error editing post:", error);
       setError(error.message || "Failed to edit the post");
-      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const HandleDeletePost = async (boardId: string, postId: string, navigate: any) => {
+  const HandleDeletePost = async (postId: string, navigate: any) => {
     if (!boardId || !postId) return;
 
     const confirmed = window.confirm("Are you sure you want to delete this post?");
@@ -75,6 +78,7 @@ export const usePost = () => {
       const success = await deletePost(boardId, postId);
       if (success) {
         alert("Post deleted successfully.");
+        HandleGetPosts(boardId, currentPage);
         navigate(`/boards/${boardId}`);
       }
     } catch (error: any) {
@@ -85,5 +89,8 @@ export const usePost = () => {
     }
   };
 
-  return { HandleGetPosts, HandleGetPost, HandleEditPost, HandleDeletePost, loading, error };
+  return { 
+    HandleGetPosts, HandleGetPost, HandleEditPost, HandleDeletePost, 
+    posts, totalPosts, currentPage, setCurrentPage, loading, error 
+  };
 };

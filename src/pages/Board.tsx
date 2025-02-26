@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,46 +19,15 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Heart } from "lucide-react";
-import { Post } from "@/types/post.type";
 import { usePost } from "@/hooks/usePost";
 
 export default function Board() {
   const { boardId } = useParams<{ boardId: string }>();
-  const { HandleGetPosts } = usePost();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [totalPosts, setTotalPosts] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { HandleGetPosts, posts, totalPosts, currentPage, setCurrentPage, loading, error } = usePost(boardId || "");
 
-  const postsPerPage = 6; 
+  const postsPerPage = 6;
   const totalPages = Math.ceil(totalPosts / postsPerPage);
-
   const navigate = useNavigate();
-
-  const handlePost = () => {
-    navigate("/newpost");
-  };
-
-  const handleViewPost = (postId: string) => {
-    navigate(`/boards/${boardId}/${postId}`);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   const boardNames: Record<string, string> = {
     study: "스터디 모집",
@@ -66,27 +35,17 @@ export default function Board() {
     code: "코드 리뷰",
   };
 
+  const changePage = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
   useEffect(() => {
-    const fetchPosts = async () => {
-      if (!boardId) return;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await HandleGetPosts(boardId, currentPage);
-        setPosts(response.posts);
-        setTotalPosts(response.total);
-      } catch (err: any) {
-        console.error("Failed to load posts:", err);
-        setError("Failed to load posts");
-      } finally {
-        setLoading(false);  
-      }
-    };
-
-    fetchPosts();
-  }, [boardId, currentPage, HandleGetPosts]);
+    if (boardId) {
+      HandleGetPosts(boardId, currentPage);
+    }
+  }, [boardId, currentPage]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -117,7 +76,7 @@ export default function Board() {
             <Card
               key={post._id}
               className="flex h-[120px] mb-6 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-transform duration-200 items-center justify-between px-3"
-              onClick={() => handleViewPost(post._id)}
+              onClick={() => navigate(`/boards/${boardId}/${post._id}`)}
             >
               <CardHeader>
                 <CardTitle className="flex">
@@ -139,11 +98,7 @@ export default function Board() {
                         : "text-black"
                     }`}
                   />
-                  <small>
-                    {post.likeCount !== undefined && post.likeCount !== null
-                      ? post.likeCount
-                      : 0}
-                  </small>
+                  <small>{post.likeCount ?? 0}</small>
                 </div>
               </CardFooter>
             </Card>
@@ -154,7 +109,7 @@ export default function Board() {
       </div>
 
       <div className="flex w-screen justify-center items-center">
-        <Button onClick={handlePost}>Write New Post</Button>
+        <Button onClick={() => navigate("/newpost")}>Write New Post</Button>
       </div>
 
       <div className="flex justify-center mt-8">
@@ -162,19 +117,15 @@ export default function Board() {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={currentPage === 1 ? undefined : handlePrevPage}
-                className={
-                  currentPage === 1
-                    ? "opacity-50 cursor-not-allowed"
-                    : "cursor-pointer"
-                }
+                onClick={() => changePage(currentPage - 1)}
+                className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}
               />
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, index) => (
-              <PaginationItem key={index + 1} className="cursor-pointer">
+              <PaginationItem key={index + 1}>
                 <PaginationLink
                   isActive={currentPage === index + 1}
-                  onClick={() => handlePageChange(index + 1)}
+                  onClick={() => changePage(index + 1)}
                 >
                   {index + 1}
                 </PaginationLink>
@@ -182,14 +133,8 @@ export default function Board() {
             ))}
             <PaginationItem>
               <PaginationNext
-                onClick={
-                  currentPage === totalPages ? undefined : handleNextPage
-                }
-                className={
-                  currentPage === totalPages
-                    ? "opacity-50 cursor-not-allowed"
-                    : "cursor-pointer"
-                }
+                onClick={() => changePage(currentPage + 1)}
+                className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""}
               />
             </PaginationItem>
           </PaginationContent>
@@ -197,4 +142,4 @@ export default function Board() {
       </div>
     </div>
   );
-};
+}

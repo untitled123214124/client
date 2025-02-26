@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { HandleSaveComment } from "@/hooks/useComment"; // 이걸 나중에 수정합니다.
+import { HandleSaveComment } from "@/hooks/useComment"; 
 
 const CommentForm = () => {
   const [content, setContent] = useState<string>("");
@@ -20,12 +20,12 @@ const CommentForm = () => {
   return (
     <div className="flex w-2/3 mx-auto">
       <Input
-        placeholder="Le"
+        placeholder="Leave a comment.."
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="place-self-start mb-4"
+        className="place-self-start mt-4"
       />
-      <Button className="ml-4" onClick={handleSaveComment}>
+      <Button className="ml-4 mt-4" onClick={handleSaveComment}>
         Post
       </Button>
     </div>
